@@ -1,0 +1,1762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Neighborhood Food Finder</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" media="print" onload="this.media='all'" />
+<noscript><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" /></noscript>
+<style>
+@font-face{font-family:'Cash Sans';src:url('https://cash-f.squarecdn.com/static/fonts/cashsans/woff2/CashSans-Regular.woff2') format('woff2');font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:'Cash Sans';src:url('https://cash-f.squarecdn.com/static/fonts/cashsans/woff2/CashSans-Medium.woff2') format('woff2');font-weight:500;font-style:normal;font-display:swap}
+@font-face{font-family:'Cash Sans';src:url('https://cash-f.squarecdn.com/static/fonts/cashsans/woff2/CashSans-Semibold.woff2') format('woff2');font-weight:600;font-style:normal;font-display:swap}
+@font-face{font-family:'Cash Sans';src:url('https://cash-f.squarecdn.com/static/fonts/cashsans/woff2/CashSans-Bold.woff2') format('woff2');font-weight:700;font-style:normal;font-display:swap}
+@font-face{font-family:'Cash Sans';src:url('https://cash-f.squarecdn.com/static/fonts/cashsans/woff2/CashSans-Black.woff2') format('woff2');font-weight:900;font-style:normal;font-display:swap}
+@font-face{font-family:'Cash Sans Wide';src:url('https://cash-f.squarecdn.com/static/fonts/cashsans/woff2/CashSansWide-Semibold.woff2') format('woff2');font-weight:600;font-style:normal;font-display:swap}
+@font-face{font-family:'Cash Sans Wide';src:url('https://cash-f.squarecdn.com/static/fonts/cashsans/woff2/CashSansWide-Bold.woff2') format('woff2');font-weight:700;font-style:normal;font-display:swap}
+@font-face{font-family:'Cash Sans Wide';src:url('https://cash-f.squarecdn.com/static/fonts/cashsans/woff2/CashSansWide-Black.woff2') format('woff2');font-weight:900;font-style:normal;font-display:block}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#000;--card:#141414;--cb:#1C1C1C;--g:#00E013;--gd:#00C411;--gg:rgba(0,224,19,0.13);--t:#FFF;--m:#999;--r:0.75em;--glow-xs:0 0 8px rgba(0,224,19,0.12),0 0 16px rgba(0,224,19,0.04);--glow-sm:0 0 14px rgba(0,224,19,0.15),0 0 28px rgba(0,224,19,0.06);--glow-md:0 0 20px rgba(0,224,19,0.22),0 0 40px rgba(0,224,19,0.09);--glow-lg:0 0 30px rgba(0,224,19,0.28),0 0 60px rgba(0,224,19,0.12);--glow-btn:0 0 16px rgba(0,224,19,0.32),0 0 32px rgba(0,224,19,0.1);--glow-btn-h:0 0 24px rgba(0,224,19,0.48),0 4px 20px rgba(0,224,19,0.22)}
+body{font-family:'Cash Sans',-apple-system,BlinkMacSystemFont,'Helvetica Neue',helvetica,sans-serif;background:var(--bg);color:var(--t);overflow:hidden;height:100vh;width:100vw;letter-spacing:-.02em}
+.app{width:100%;height:100vh;position:relative;overflow:hidden}
+.app::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;opacity:1;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E");background-size:200px 200px}
+.app::after{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;opacity:1;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='c'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.45' numOctaves='3' seed='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23c)' opacity='0.05'/%3E%3C/svg%3E"),radial-gradient(circle at 1px 1px,rgba(255,255,255,0.018) 0.5px,transparent 0.5px);background-size:300px 300px,20px 20px}
+.wbox{position:relative;z-index:1;background:radial-gradient(ellipse at 50% 50%,rgba(10,10,10,0.97) 0%,rgba(10,10,10,0.92) 55%,rgba(10,10,10,0.6) 75%,transparent 100%);border-radius:32px}
+.pinner{position:relative;z-index:1;background:radial-gradient(ellipse at 50% 30%,rgba(13,13,13,0.98) 0%,rgba(13,13,13,0.93) 60%,rgba(13,13,13,0.5) 80%,transparent 100%);border-radius:24px}
+.rinner{position:relative;z-index:1;background:radial-gradient(ellipse at 50% 20%,rgba(13,13,13,0.98) 0%,rgba(13,13,13,0.92) 55%,rgba(13,13,13,0.5) 78%,transparent 100%);border-radius:24px}
+.mdl{position:relative;z-index:201}
+.screen{position:absolute;top:0;left:0;width:100%;height:100%;overflow-y:auto;overflow-x:hidden;opacity:0;pointer-events:none;transition:opacity .4s,transform .4s;transform:translateX(40px);z-index:1}
+.screen.active{opacity:1;pointer-events:auto;transform:translateX(0)!important}
+.screen.left{transform:translateX(-40px)}
+#welcome{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;background:radial-gradient(ellipse at 50% 35%,rgba(0,224,19,0.07) 0%,rgba(0,224,19,0.02) 30%,transparent 65%),#000}
+#welcome.active{animation:fadeUp .7s ease forwards}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.wbox{display:flex;flex-direction:column;align-items:center;text-align:center;max-width:440px;padding:40px 24px;margin:0 auto}
+.atitle{font-family:'Cash Sans Wide','Cash Sans',Helvetica Neue,helvetica,sans-serif;font-size:2.8rem;font-weight:600;letter-spacing:-.01em;line-height:1;margin:0 0 6px;color:var(--t);text-align:center;width:100%}
+.atitle span{display:block;font-size:3.4rem;letter-spacing:.08em;margin-top:2px;color:var(--g);text-shadow:0 0 18px rgba(0,224,19,0.4),0 0 40px rgba(0,224,19,0.18)}
+.asub{font-size:1.05rem;font-weight:400;color:var(--m);margin-bottom:40px;letter-spacing:-.01em}
+.zgroup{margin-bottom:24px}
+.zinput{width:100%;background:transparent;border:none;border-bottom:2px solid #333;color:var(--t);font-size:1.3rem;font-weight:300;padding:12px 4px;text-align:center;letter-spacing:4px;outline:none;transition:border-color .3s,box-shadow .3s}
+.zinput::placeholder{color:#444;letter-spacing:1px;font-size:1rem}
+.zinput:focus{border-bottom-color:var(--g);box-shadow:0 4px 12px rgba(0,214,50,0.22),0 8px 24px rgba(0,214,50,0.08)}
+.zerr{color:#e74c3c;font-size:.82rem;margin-top:8px;min-height:18px}
+.rlabel{color:var(--m);font-size:.82rem;margin-bottom:10px}
+.rrow{display:flex;gap:10px;justify-content:center;margin-bottom:28px}
+.rpill{background:var(--card);border:1.5px solid var(--cb);color:var(--m);padding:8px 22px;border-radius:.75em;cursor:pointer;font-size:.88rem;font-weight:500;transition:all .25s;user-select:none;letter-spacing:-.01em}
+.rpill:hover{border-color:#444;color:var(--t)}
+.rpill.sel{border-color:var(--g);color:var(--g);background:var(--gg);box-shadow:0 0 12px rgba(0,214,50,0.25)}
+.btn{padding:14px 48px;font-size:1rem;font-weight:600;border-radius:clamp(18px,1em,22px);cursor:pointer;transition:all .25s;border:none;letter-spacing:-.01em}
+.bg{background:var(--g);color:#000;box-shadow:var(--glow-btn)}
+.bg:hover{background:var(--gd);transform:translateY(-1px);box-shadow:var(--glow-btn-h)}
+.bo{background:transparent;color:var(--g);border:2px solid var(--g);animation:pulse 2.5s ease-in-out infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(0,214,50,.3),0 0 12px rgba(0,214,50,0.15)}50%{box-shadow:0 0 0 8px rgba(0,214,50,0),0 0 12px rgba(0,214,50,0.15)}}
+.bo:hover{background:var(--gg);transform:translateY(-1px)}
+#prefs{padding:36px 24px 100px;background:radial-gradient(ellipse at 50% 0%,rgba(0,224,19,0.04) 0%,transparent 45%),#000}
+.pinner{max-width:780px;margin:0 auto}
+.back{color:var(--m);font-size:.88rem;cursor:pointer;display:inline-flex;align-items:center;gap:6px;margin-bottom:20px;background:none;border:none;font-family:inherit;transition:color .2s}
+.back:hover{color:var(--t)}
+.barr{display:inline-block;width:7px;height:7px;border-left:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg)}
+.stitle{font-size:1.7rem;font-weight:700;letter-spacing:-.03em;margin-bottom:6px}
+.ssub{color:var(--m);font-weight:400;margin-bottom:20px;font-size:.9rem;letter-spacing:-.01em}
+.pills{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:32px}
+.pill{background:var(--card);border:1.5px solid transparent;color:var(--m);padding:10px 20px;border-radius:.75em;cursor:pointer;font-size:.88rem;font-weight:500;transition:all .25s;user-select:none;letter-spacing:-.01em}
+.pill:hover{border-color:#444;color:var(--t)}
+.pill.sel{border-color:var(--g);color:var(--g);background:var(--gg);box-shadow:0 0 12px rgba(0,214,50,0.25)}
+.pbtns{display:flex;gap:14px;flex-wrap:wrap;padding-top:8px}
+#results{padding:28px 24px 60px;background:radial-gradient(ellipse at 50% -5%,rgba(0,224,19,0.05) 0%,rgba(0,224,19,0.02) 20%,transparent 45%),#000}
+.rinner{max-width:940px;margin:0 auto}
+.rmeta{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 6px}
+.mtag{background:var(--gg);color:var(--g);padding:3px 12px;border-radius:.5em;font-size:.75rem;font-weight:500;letter-spacing:-.01em}
+.rcount{color:var(--m);font-size:.82rem;font-weight:300;margin-bottom:4px}
+.lbadge{display:inline-flex;align-items:center;gap:5px;font-size:.72rem;color:var(--m);margin-left:10px}
+.ldot{width:6px;height:6px;border-radius:50%;display:inline-block}
+.ldot.on{background:var(--g);box-shadow:0 0 6px var(--g)}
+.ldot.off{background:#666}
+.map-container{width:100%;height:280px;margin:16px 0 24px;border-radius:var(--r);overflow:hidden;border:1px solid rgba(0,214,50,0.22);box-shadow:0 0 20px rgba(0,214,50,0.12),0 0 40px rgba(0,214,50,0.05);position:relative;opacity:0;transform:translateY(10px);transition:opacity .5s,transform .5s}
+.map-container.vis{opacity:1;transform:translateY(0)}
+#leafletMap{width:100%;height:100%;z-index:1}
+.leaflet-container{background:#1a1a2e!important}
+.leaflet-control-zoom a{background:var(--card)!important;color:var(--t)!important;border-color:#333!important}
+.leaflet-control-zoom a:hover{background:#333!important}
+.leaflet-popup-content-wrapper{background:var(--card)!important;color:var(--t)!important;border-radius:10px!important;box-shadow:var(--glow-md)!important;border:1px solid rgba(0,214,50,0.2)!important}
+.leaflet-popup-tip{background:var(--card)!important}
+.leaflet-popup-content{margin:10px 14px!important;font-family:inherit!important;font-size:.85rem!important}
+.leaflet-popup-content .popup-name{font-weight:700;font-size:.9rem;margin-bottom:2px}
+.leaflet-popup-content .popup-cuisine{color:var(--g);font-size:.78rem;opacity:.8}
+.leaflet-popup-close-button{color:var(--m)!important}
+.leaflet-popup-close-button:hover{color:var(--t)!important}
+.user-marker{width:16px;height:16px;background:#fff;border:3px solid var(--g);border-radius:50%;box-shadow:0 0 10px rgba(0,214,50,0.5),0 0 20px rgba(0,214,50,0.2)}
+@keyframes userPulse{0%{transform:scale(1);opacity:.6}100%{transform:scale(3);opacity:0}}
+.user-marker::after{content:'';position:absolute;top:-3px;left:-3px;width:16px;height:16px;border:2px solid var(--g);border-radius:50%;animation:userPulse 2s ease-out infinite}
+.restaurant-marker{width:12px;height:12px;background:var(--g);border-radius:50%;border:2px solid rgba(0,214,50,0.6);box-shadow:0 0 8px rgba(0,214,50,0.5)}
+.mleg{display:flex;gap:16px;justify-content:center;margin-top:10px;font-size:.75rem;color:var(--m);align-items:center}
+.legdot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:4px}
+.fbar{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin-bottom:20px}
+.fbar::-webkit-scrollbar{height:3px}
+.fbar::-webkit-scrollbar-thumb{background:#333;border-radius:3px}
+.fc{flex-shrink:0;background:var(--card);border:1.5px solid transparent;color:var(--m);padding:7px 16px;border-radius:.75em;cursor:pointer;font-size:.8rem;font-weight:500;transition:all .25s;white-space:nowrap;letter-spacing:-.01em}
+.fc:hover{color:var(--t);border-color:#444}
+.fc.act{border-color:var(--g);color:var(--g);background:var(--gg);box-shadow:0 0 12px rgba(0,214,50,0.2)}
+.cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px}
+.crd{background:var(--card);border-radius:clamp(18px,1em,22px);border:1px solid var(--cb);padding:18px 18px 18px 26px;position:relative;overflow:hidden;transition:transform .25s,box-shadow .25s,border-color .3s;box-shadow:var(--glow-xs);cursor:pointer}
+.crd:hover{transform:translateY(-4px);box-shadow:0 4px 20px rgba(0,214,50,0.18),0 0 40px rgba(0,214,50,0.08);border-color:rgba(0,214,50,0.2)}
+.crd.highlighted{border-color:var(--g)!important;box-shadow:var(--glow-md)!important}
+.cacc{position:absolute;left:0;top:0;width:4px;height:100%;filter:drop-shadow(0 0 4px currentColor)}
+.cname{font-size:1rem;font-weight:600;letter-spacing:-.02em;margin-bottom:4px}
+.ccui{font-size:.8rem;color:var(--g);margin-bottom:3px;font-weight:400;opacity:.8}
+.caddr{font-size:.78rem;color:var(--m);font-weight:300;margin-bottom:12px}
+.bm{background:transparent;border:1.5px solid var(--g);color:var(--g);padding:7px 18px;border-radius:.75em;font-size:.8rem;font-weight:500;cursor:pointer;transition:all .25s;letter-spacing:-.01em}
+.bm:hover{background:var(--g);color:#000;box-shadow:var(--glow-btn)}
+.empty{text-align:center;padding:60px 20px;color:var(--m)}
+.emptyt{font-size:1.1rem;font-weight:600;color:var(--t);margin-bottom:6px}
+.empty-icon{font-size:2.5rem;margin-bottom:16px;opacity:.5}
+.loader{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:var(--bg);z-index:100;flex-direction:column;align-items:center;justify-content:center;gap:20px}
+.loader.vis{display:flex}
+.ldots{display:flex;gap:8px}
+.ld{width:10px;height:10px;border-radius:50%;background:var(--g);box-shadow:0 0 8px rgba(0,214,50,0.5);animation:bnc 1.4s ease-in-out infinite}
+.ld:nth-child(2){animation-delay:.16s}
+.ld:nth-child(3){animation-delay:.32s}
+@keyframes bnc{0%,80%,100%{transform:scale(.6);opacity:.4}40%{transform:scale(1);opacity:1}}
+.ltxt{font-size:1.1rem;font-weight:300;color:var(--m);animation:lp 1.5s ease-in-out infinite}
+@keyframes lp{0%,100%{opacity:.5}50%{opacity:1}}
+.mbg{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.75);z-index:200;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .3s;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.mbg.vis{opacity:1;pointer-events:auto}
+.mdl{background:var(--card);width:100%;max-width:580px;max-height:80vh;border-radius:clamp(18px,1.2em,24px) clamp(18px,1.2em,24px) 0 0;padding:28px 24px 36px;overflow-y:auto;transform:translateY(100%);transition:transform .4s cubic-bezier(.22,1,.36,1);box-shadow:0 -5px 30px rgba(0,224,19,0.18),0 -2px 60px rgba(0,224,19,0.07);border-top:1px solid rgba(0,224,19,0.12)}
+.mbg.vis .mdl{transform:translateY(0)}
+.mhdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px}
+.mnam{font-size:1.3rem;font-weight:600;letter-spacing:-.02em}
+.mcuim{font-size:.82rem;color:var(--g);font-weight:400;margin-top:3px;opacity:.8}
+.mx{background:rgba(255,255,255,.08);border:none;color:var(--m);width:34px;height:34px;border-radius:50%;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0}
+.mx:hover{background:rgba(255,255,255,.15);color:var(--t)}
+.modal-body{text-align:center;padding:20px 0}
+.modal-icon{font-size:3rem;margin-bottom:16px}
+.modal-msg{color:var(--m);font-size:.92rem;font-weight:300;line-height:1.6;margin-bottom:24px}
+.modal-addr{color:var(--m);font-size:.82rem;margin-bottom:24px;padding:12px 16px;background:rgba(255,255,255,.04);border-radius:10px;border:1px solid rgba(255,255,255,.06)}
+.modal-addr-label{font-size:.72rem;text-transform:uppercase;letter-spacing:1px;color:#555;margin-bottom:4px}
+.modal-token{font-family:'SF Mono',SFMono-Regular,Consolas,monospace;font-size:.78rem;color:var(--g);word-break:break-all;padding:10px 14px;background:rgba(0,214,50,0.06);border-radius:8px;border:1px solid rgba(0,214,50,0.15);margin-bottom:20px;cursor:pointer;transition:all .2s;position:relative}
+.modal-token:hover{background:rgba(0,214,50,0.1);border-color:rgba(0,214,50,0.3)}
+.modal-token-label{font-size:.68rem;text-transform:uppercase;letter-spacing:1px;color:#555;margin-bottom:6px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
+.modal-copy-hint{font-size:.7rem;color:var(--m);margin-top:4px;opacity:0;transition:opacity .2s}
+.modal-token:hover .modal-copy-hint{opacity:1}
+.modal-cta{display:inline-flex;align-items:center;gap:8px;background:var(--g);color:#000;padding:14px 32px;border-radius:50px;font-size:.95rem;font-weight:700;border:none;cursor:pointer;transition:all .25s;box-shadow:var(--glow-btn);text-decoration:none}
+.modal-cta:hover{background:var(--gd);box-shadow:var(--glow-btn-h);transform:translateY(-1px)}
+.modal-divider{height:1px;background:rgba(255,255,255,.06);margin:20px 0}
+.modal-goose{padding:16px;background:rgba(0,214,50,0.04);border-radius:12px;border:1px solid rgba(0,214,50,0.1)}
+.modal-goose-label{font-size:.72rem;text-transform:uppercase;letter-spacing:1px;color:var(--g);margin-bottom:8px;font-weight:600}
+.modal-goose-cmd{font-family:'SF Mono',SFMono-Regular,Consolas,monospace;font-size:.82rem;color:var(--t);line-height:1.5;cursor:pointer;padding:8px 12px;background:rgba(0,0,0,.3);border-radius:8px;transition:background .2s}
+.modal-goose-cmd:hover{background:rgba(0,0,0,.5)}
+.menu-section{text-align:left;margin-bottom:16px}
+.menu-section-title{font-size:.72rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--g);margin-bottom:10px;font-weight:600;padding-bottom:6px;border-bottom:1px solid rgba(0,214,50,0.1)}
+.menu-item{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.04);transition:background .2s}
+.menu-item:last-child{border-bottom:none}
+.menu-item-info{flex:1;min-width:0}
+.menu-item-name{font-size:.88rem;font-weight:600;color:var(--t);margin-bottom:2px}
+.menu-item-desc{font-size:.75rem;color:var(--m);font-weight:300;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.menu-item-right{display:flex;align-items:center;gap:10px;flex-shrink:0;margin-left:12px}
+.menu-item-price{font-size:.88rem;font-weight:600;color:var(--t)}
+.menu-add{width:28px;height:28px;border-radius:50%;background:transparent;border:1.5px solid var(--g);color:var(--g);font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;line-height:1}
+.menu-add:hover{background:var(--g);color:#000;box-shadow:var(--glow-btn)}
+.menu-add.added{background:var(--g);color:#000;border-color:var(--g)}
+.cart-bar{display:flex;justify-content:space-between;align-items:center;background:rgba(0,224,19,0.08);border:1px solid rgba(0,224,19,0.12);border-radius:.75em;padding:12px 16px;margin-top:16px;margin-bottom:8px}
+.cart-bar-left{font-size:.85rem;color:var(--t);font-weight:500}
+.cart-bar-left span{color:var(--g);font-weight:700}
+.cart-checkout{background:var(--g);color:#000;border:none;padding:8px 20px;border-radius:.75em;font-size:.82rem;font-weight:600;cursor:pointer;transition:all .2s;box-shadow:var(--glow-btn);letter-spacing:-.01em}
+.cart-checkout:hover{background:var(--gd);box-shadow:var(--glow-btn-h);transform:translateY(-1px)}
+.order-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:300;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .4s;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.order-overlay.vis{opacity:1}
+.order-confirmed{text-align:center;padding:40px 32px;animation:confirmPop .5s cubic-bezier(.22,1,.36,1);max-width:380px}
+@keyframes confirmPop{from{opacity:0;transform:scale(0.9) translateY(20px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.order-confirmed-icon{font-size:4rem;margin-bottom:16px}
+.order-confirmed-title{font-size:1.4rem;font-weight:700;letter-spacing:-.03em;color:var(--t);margin-bottom:6px}
+.order-confirmed-sub{font-size:.92rem;color:var(--m);font-weight:300;line-height:1.5}
+.order-confirmed-eta{display:inline-block;margin-top:16px;padding:8px 20px;background:var(--gg);color:var(--g);border-radius:.75em;font-size:.88rem;font-weight:500;box-shadow:var(--glow-sm)}
+.order-confirmed-done{display:inline-block;margin-top:20px;background:var(--g);color:#000;border:none;padding:12px 36px;border-radius:clamp(18px,1em,22px);font-size:.92rem;font-weight:600;cursor:pointer;transition:all .25s;box-shadow:var(--glow-btn);letter-spacing:-.01em}
+.order-confirmed-done:hover{background:var(--gd);box-shadow:var(--glow-btn-h);transform:translateY(-1px)}
+.copied-toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--g);color:#000;padding:8px 20px;border-radius:50px;font-size:.82rem;font-weight:600;opacity:0;transition:all .3s;z-index:300;pointer-events:none;box-shadow:var(--glow-btn)}
+.copied-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.topnav{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;padding:16px 20px;pointer-events:none}
+.topnav-btn{pointer-events:auto;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .25s;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.topnav-btn:hover{background:rgba(255,255,255,0.1);border-color:rgba(0,224,19,0.2)}
+.topnav-btn svg{width:18px;height:18px;fill:none;stroke:var(--t);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.panel-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:250;opacity:0;pointer-events:none;transition:opacity .3s;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.panel-overlay.vis{opacity:1;pointer-events:auto}
+.panel{position:fixed;top:0;height:100%;width:320px;max-width:85vw;background:var(--card);z-index:260;overflow-y:auto;transition:transform .35s cubic-bezier(.22,1,.36,1);border:1px solid rgba(255,255,255,0.06)}
+.panel-left{left:0;transform:translateX(-100%);border-radius:0 clamp(18px,1.2em,24px) clamp(18px,1.2em,24px) 0}
+.panel-right{right:0;transform:translateX(100%);border-radius:clamp(18px,1.2em,24px) 0 0 clamp(18px,1.2em,24px)}
+.panel-overlay.vis .panel-left,.panel-overlay.vis .panel-right{transform:translateX(0)}
+.panel-header{display:flex;justify-content:space-between;align-items:center;padding:20px 20px 16px;border-bottom:1px solid rgba(255,255,255,0.06)}
+.panel-title{font-size:1.1rem;font-weight:600;letter-spacing:-.02em}
+.panel-close{background:none;border:none;color:var(--m);font-size:1.2rem;cursor:pointer;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:50%;transition:all .2s}
+.panel-close:hover{background:rgba(255,255,255,0.08);color:var(--t)}
+.panel-body{padding:20px}
+.profile-section{display:flex;align-items:center;gap:14px;margin-bottom:24px}
+.profile-avatar{width:52px;height:52px;border-radius:50%;background:var(--g);display:flex;align-items:center;justify-content:center;font-size:1.3rem;font-weight:700;color:#000;flex-shrink:0}
+.profile-info{flex:1;min-width:0}
+.profile-name{font-size:1rem;font-weight:600;letter-spacing:-.02em}
+.profile-tag{font-size:.82rem;color:var(--g);font-weight:500}
+.panel-stat-row{display:flex;gap:10px;margin-bottom:20px}
+.panel-stat{flex:1;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:.75em;padding:14px;text-align:center}
+.panel-stat-val{font-size:1.2rem;font-weight:700;color:var(--g);letter-spacing:-.02em}
+.panel-stat-label{font-size:.72rem;color:var(--m);margin-top:2px;font-weight:400}
+.panel-menu-item{display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid rgba(255,255,255,0.04);cursor:pointer;transition:opacity .2s}
+.panel-menu-item:hover{opacity:.7}
+.panel-menu-item:last-child{border-bottom:none}
+.panel-menu-icon{width:36px;height:36px;border-radius:.6em;background:rgba(255,255,255,0.04);display:flex;align-items:center;justify-content:center;font-size:.95rem;flex-shrink:0}
+.panel-menu-icon svg,.recent-order-icon svg{width:18px;height:18px;fill:none;stroke:var(--g);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.panel-menu-text{flex:1}
+.panel-menu-label{font-size:.88rem;font-weight:500;letter-spacing:-.01em}
+.panel-menu-sub{font-size:.75rem;color:var(--m);font-weight:400}
+.panel-menu-arrow{color:var(--m);font-size:.75rem}
+.panel-section-title{font-size:.72rem;text-transform:uppercase;letter-spacing:1px;color:var(--m);font-weight:600;margin:20px 0 10px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.04)}
+.pref-toggle{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.04)}
+.pref-toggle-label{font-size:.88rem;font-weight:500;letter-spacing:-.01em}
+.pref-toggle-sub{font-size:.75rem;color:var(--m);font-weight:400}
+.toggle{width:44px;height:24px;border-radius:12px;background:rgba(255,255,255,0.12);position:relative;cursor:pointer;transition:background .25s;flex-shrink:0}
+.toggle.on{background:var(--g)}
+.toggle::after{content:'';position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .25s;box-shadow:0 1px 3px rgba(0,0,0,0.3)}
+.toggle.on::after{transform:translateX(20px)}
+.recent-order{display:flex;align-items:center;gap:12px;padding:12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:.75em;margin-bottom:8px}
+.recent-order-icon{width:36px;height:36px;border-radius:.6em;background:rgba(255,255,255,0.04);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.recent-order-info{flex:1}
+.recent-order-name{font-size:.85rem;font-weight:500;letter-spacing:-.01em}
+.recent-order-meta{font-size:.72rem;color:var(--m)}
+.recent-order-price{font-size:.85rem;font-weight:600;color:var(--g)}
+@media(max-width:768px){.atitle{font-size:2.2rem}.stitle{font-size:1.3rem}.cgrid{grid-template-columns:1fr}.pbtns{flex-direction:column;align-items:stretch}.pbtns .btn{width:100%;text-align:center}.mdl{max-height:100vh;border-radius:0;max-width:100%}#prefs,#results{padding:20px 16px 100px}}
+@media(max-width:480px){.atitle{font-size:1.6rem}.pill{padding:8px 14px;font-size:.82rem}}
+</style>
+  
+  
+  <script type="application/ld+json">
+{
+  "@context": "urn:goose.ai:schema",
+  "@type": "GooseApp",
+  "name": "neighborhood-food-finder",
+  "description": "Discover nearby restaurants by zip code, mood & diet with interactive map and green-glow UI",
+  "width": 480,
+  "height": 720,
+  "resizable": true,
+  "mcpServers": [
+    "apps"
+  ]
+}
+  </script>
+</head>
+<body>
+<div class="app">
+<div class="topnav">
+<button class="topnav-btn" id="navAccount"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 12 0v1"/></svg></button>
+<button class="topnav-btn" id="navPrefs"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+</div>
+
+<div class="panel-overlay" id="accountOverlay"><div class="panel panel-left">
+<div class="panel-header"><span class="panel-title">Account</span><button class="panel-close" id="accountClose">✕</button></div>
+<div class="panel-body">
+<div class="profile-section"><div class="profile-avatar">JR</div><div class="profile-info"><div class="profile-name">Joshua R.</div><div class="profile-tag">$joshr</div></div></div>
+<div class="panel-stat-row"><div class="panel-stat"><div class="panel-stat-val">47</div><div class="panel-stat-label">Orders</div></div><div class="panel-stat"><div class="panel-stat-val">12</div><div class="panel-stat-label">Favorites</div></div><div class="panel-stat"><div class="panel-stat-val">$284</div><div class="panel-stat-label">This Month</div></div></div>
+<div class="panel-section-title">Recent Orders</div>
+<div class="recent-order"><div class="recent-order-icon"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6 2 10c0 2 2 4 10 12 8-8 10-10 10-12 0-4-4.48-8-10-8z"/><circle cx="9" cy="9" r="1.2" fill="var(--g)" stroke="none"/><circle cx="14" cy="8" r="1.2" fill="var(--g)" stroke="none"/><circle cx="11" cy="12" r="1.2" fill="var(--g)" stroke="none"/></svg></div><div class="recent-order-info"><div class="recent-order-name">Bella Napoli</div><div class="recent-order-meta">2 items · Yesterday</div></div><div class="recent-order-price">$24.50</div></div>
+<div class="recent-order"><div class="recent-order-icon"><svg viewBox="0 0 24 24"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg></div><div class="recent-order-info"><div class="recent-order-name">Ritual Coffee</div><div class="recent-order-meta">1 item · 3 days ago</div></div><div class="recent-order-price">$5.75</div></div>
+<div class="recent-order"><div class="recent-order-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M8 12l2-4 2 4-2 4z"/><path d="M14 10l2-2 2 4-2 2z"/></svg></div><div class="recent-order-info"><div class="recent-order-name">Sakura Sushi</div><div class="recent-order-meta">3 items · Last week</div></div><div class="recent-order-price">$38.00</div></div>
+<div class="panel-section-title">Account</div>
+<div class="panel-menu-item"><div class="panel-menu-icon"><svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div><div class="panel-menu-text"><div class="panel-menu-label">Payment Methods</div><div class="panel-menu-sub">Cash App Pay · Visa ****4821</div></div><div class="panel-menu-arrow">›</div></div>
+<div class="panel-menu-item"><div class="panel-menu-icon"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div><div class="panel-menu-text"><div class="panel-menu-label">Saved Addresses</div><div class="panel-menu-sub">Home · Work · 1 more</div></div><div class="panel-menu-arrow">›</div></div>
+<div class="panel-menu-item"><div class="panel-menu-icon"><svg viewBox="0 0 24 24"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg></div><div class="panel-menu-text"><div class="panel-menu-label">Rewards & Boosts</div><div class="panel-menu-sub">3 active boosts</div></div><div class="panel-menu-arrow">›</div></div>
+<div class="panel-menu-item"><div class="panel-menu-icon"><svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div><div class="panel-menu-text"><div class="panel-menu-label">Spending Insights</div><div class="panel-menu-sub">View your food spending</div></div><div class="panel-menu-arrow">›</div></div>
+</div></div></div>
+
+<div class="panel-overlay" id="prefsOverlay"><div class="panel panel-right">
+<div class="panel-header"><span class="panel-title">Settings</span><button class="panel-close" id="prefsClose">✕</button></div>
+<div class="panel-body">
+<div class="panel-section-title">Notifications</div>
+<div class="pref-toggle"><div><div class="pref-toggle-label">Order Updates</div><div class="pref-toggle-sub">Get notified about your order status</div></div><div class="toggle on" data-pref="orderUpdates"></div></div>
+<div class="pref-toggle"><div><div class="pref-toggle-label">Deals & Promos</div><div class="pref-toggle-sub">Nearby restaurant deals</div></div><div class="toggle on" data-pref="deals"></div></div>
+<div class="pref-toggle"><div><div class="pref-toggle-label">Weekly Digest</div><div class="pref-toggle-sub">Top picks in your area</div></div><div class="toggle" data-pref="digest"></div></div>
+<div class="panel-section-title">Ordering</div>
+<div class="pref-toggle"><div><div class="pref-toggle-label">Default Tip</div><div class="pref-toggle-sub">Auto-add 18% tip</div></div><div class="toggle on" data-pref="tip"></div></div>
+<div class="pref-toggle"><div><div class="pref-toggle-label">Contactless Delivery</div><div class="pref-toggle-sub">Leave at door by default</div></div><div class="toggle on" data-pref="contactless"></div></div>
+<div class="pref-toggle"><div><div class="pref-toggle-label">Utensils & Napkins</div><div class="pref-toggle-sub">Include with every order</div></div><div class="toggle" data-pref="utensils"></div></div>
+<div class="panel-section-title">Display</div>
+<div class="pref-toggle"><div><div class="pref-toggle-label">Show Map</div><div class="pref-toggle-sub">Display map on results page</div></div><div class="toggle on" data-pref="map"></div></div>
+<div class="pref-toggle"><div><div class="pref-toggle-label">Show Prices</div><div class="pref-toggle-sub">Display estimated prices</div></div><div class="toggle on" data-pref="prices"></div></div>
+<div class="panel-section-title">About</div>
+<div class="panel-menu-item"><div class="panel-menu-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></div><div class="panel-menu-text"><div class="panel-menu-label">Terms of Service</div></div><div class="panel-menu-arrow">›</div></div>
+<div class="panel-menu-item"><div class="panel-menu-icon"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div><div class="panel-menu-text"><div class="panel-menu-label">Privacy Policy</div></div><div class="panel-menu-arrow">›</div></div>
+<div class="panel-menu-item"><div class="panel-menu-icon"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div><div class="panel-menu-text"><div class="panel-menu-label">Support</div></div><div class="panel-menu-arrow">›</div></div>
+</div></div></div>
+
+<div class="loader" id="loader"><div class="ldots"><div class="ld"></div><div class="ld"></div><div class="ld"></div></div><div class="ltxt">Searching nearby...</div></div>
+<div class="screen active" id="welcome"><div class="wbox"><h1 class="atitle">Neighborhood<span>EATS</span></h1><p class="asub">Discover your next meal</p><div class="zgroup"><input type="text" class="zinput" id="zipIn" placeholder="Enter your zip code" maxlength="5" autocomplete="off"><div class="zerr" id="zipErr"></div></div><div class="rlabel">Search radius</div><div class="rrow" id="radRow"><div class="rpill sel" data-r="5">5 mi</div><div class="rpill" data-r="10">10 mi</div><div class="rpill" data-r="15">15 mi</div></div><button class="btn bg" id="btnFind">Find Food</button></div></div>
+<div class="screen" id="prefs"><div class="pinner"><button class="back" id="backW"><span class="barr"></span> Back</button><div><h2 class="stitle">What are you in the mood for?</h2><p class="ssub">Select one or more categories</p><div class="pills" id="moodP"></div></div><div><h2 class="stitle">Dietary preferences</h2><p class="ssub">Optional — select any that apply</p><div class="pills" id="dietP"></div></div><div class="pbtns"><button class="btn bg" id="btnShow">Show Me Restaurants</button><button class="btn bo" id="btnSurp">Surprise Me</button></div></div></div>
+<div class="screen" id="results"><div class="rinner"><button class="back" id="backP"><span class="barr"></span> Back to Preferences</button><h2 class="stitle" id="resT">Restaurants near you</h2><div class="rmeta" id="resM"></div><div class="rcount" id="resC"></div><div class="map-container" id="mapW"><div id="leafletMap"></div></div><div class="mleg"><span><span class="legdot" style="background:#fff;border:2px solid #00D632;box-shadow:0 0 6px rgba(0,214,50,0.4)"></span> You</span><span><span class="legdot" style="background:#00D632;box-shadow:0 0 6px rgba(0,214,50,0.4)"></span> Restaurants</span></div><div class="fbar" id="fbar"></div><div class="cgrid" id="cgrid"></div></div></div>
+<div class="mbg" id="modalBg"><div class="mdl"><div class="mhdr"><div><div class="mnam" id="mNam"></div><div class="mcuim" id="mCui"></div></div><button class="mx" id="mX">✕</button></div><div id="mBod"></div></div></div>
+<div class="copied-toast" id="copiedToast">Copied!</div>
+</div>
+<script>
+(function(){
+var MOODS=['Coffee & Cafe','Pizza & Italian','Sandwiches & Subs','Breakfast & Brunch','Healthy & Fresh','Sweets & Bakery','Comfort Food','International','Quick Bites','Bar & Grill'];
+var DIETS=['Vegetarian','Vegan','Gluten-Free','Dairy-Free','Nut-Free','Halal','Kosher','No Restrictions'];
+var COLORS={'Coffee & Cafe':'#8B6F47','Pizza & Italian':'#C0392B','Sandwiches & Subs':'#D4A373','Breakfast & Brunch':'#F39C12','Healthy & Fresh':'#27AE60','Sweets & Bakery':'#E91E8C','Comfort Food':'#E2703A','International':'#8E44AD','Quick Bites':'#3498DB','Bar & Grill':'#E74C3C'};
+
+var DEMO_RESTAURANTS_BY_ZIP = {
+  "10001": [
+    {name:"Sakura Sushi",address:"Chelsea, Manhattan",unitToken:"DM10001A",lat:40.7408,lng:-74.0003},
+    {name:"Taqueria El Sol",address:"Chelsea, Manhattan",unitToken:"DM10001B",lat:40.7522,lng:-73.9939},
+    {name:"Bella Napoli",address:"Chelsea, Manhattan",unitToken:"DM10001C",lat:40.7418,lng:-73.9979},
+    {name:"Golden Dragon",address:"Chelsea, Manhattan",unitToken:"DM10001D",lat:40.7439,lng:-73.9966},
+    {name:"Thai Orchid",address:"Chelsea, Manhattan",unitToken:"DM10001E",lat:40.7436,lng:-73.9943},
+    {name:"Pho Saigon",address:"Chelsea, Manhattan",unitToken:"DM10001F",lat:40.7439,lng:-73.9953},
+    {name:"Curry House",address:"Chelsea, Manhattan",unitToken:"DM10001G",lat:40.7525,lng:-74.0021},
+    {name:"Olive & Fig",address:"Chelsea, Manhattan",unitToken:"DM10001H",lat:40.7448,lng:-74.0013}
+  ],
+  "10003": [
+    {name:"Mediterranean Grill",address:"East Village, Manhattan",unitToken:"DM10003A",lat:40.7253,lng:-73.9912},
+    {name:"Seoul Kitchen",address:"East Village, Manhattan",unitToken:"DM10003B",lat:40.7334,lng:-73.9844},
+    {name:"The Rustic Spoon",address:"East Village, Manhattan",unitToken:"DM10003C",lat:40.7323,lng:-73.9817},
+    {name:"Main Street Diner",address:"East Village, Manhattan",unitToken:"DM10003D",lat:40.7325,lng:-73.984},
+    {name:"Ritual Coffee",address:"East Village, Manhattan",unitToken:"DM10003E",lat:40.7329,lng:-73.986},
+    {name:"Sugar & Flour Bakery",address:"East Village, Manhattan",unitToken:"DM10003F",lat:40.7273,lng:-73.9927},
+    {name:"Fresh Bowl Co",address:"East Village, Manhattan",unitToken:"DM10003G",lat:40.7376,lng:-73.9912},
+    {name:"The Oyster Bar",address:"East Village, Manhattan",unitToken:"DM10003H",lat:40.737,lng:-73.9947},
+    {name:"Smokehouse BBQ",address:"East Village, Manhattan",unitToken:"DM10003I",lat:40.7344,lng:-73.9861}
+  ],
+  "10013": [
+    {name:"Catch of the Day",address:"Tribeca, Manhattan",unitToken:"DM10013A",lat:40.7126,lng:-74.0067},
+    {name:"Pit Boss BBQ",address:"Tribeca, Manhattan",unitToken:"DM10013B",lat:40.7154,lng:-74.0095},
+    {name:"Slice House",address:"Tribeca, Manhattan",unitToken:"DM10013C",lat:40.7225,lng:-74.0134},
+    {name:"The Brunch Box",address:"Tribeca, Manhattan",unitToken:"DM10013D",lat:40.7239,lng:-74.0132},
+    {name:"Addis Kitchen",address:"Tribeca, Manhattan",unitToken:"DM10013E",lat:40.7179,lng:-74.0158},
+    {name:"Island Spice",address:"Tribeca, Manhattan",unitToken:"DM10013F",lat:40.7255,lng:-74.0119},
+    {name:"Cairo Kitchen",address:"Tribeca, Manhattan",unitToken:"DM10013G",lat:40.7178,lng:-74.0023},
+    {name:"Magnolia Kitchen",address:"Tribeca, Manhattan",unitToken:"DM10013H",lat:40.7157,lng:-74.013},
+    {name:"Bistro Parisien",address:"Tribeca, Manhattan",unitToken:"DM10013I",lat:40.7157,lng:-74.0075},
+    {name:"Tokyo Ramen House",address:"Tribeca, Manhattan",unitToken:"DM10013J",lat:40.7179,lng:-74.0134}
+  ],
+  "10019": [
+    {name:"Sweet Tea Kitchen",address:"Midtown West, Manhattan",unitToken:"DM10019A",lat:40.7637,lng:-73.9809},
+    {name:"Cafe Lyon",address:"Midtown West, Manhattan",unitToken:"DM10019B",lat:40.7582,lng:-73.9904},
+    {name:"Koi Japanese Grill",address:"Midtown West, Manhattan",unitToken:"DM10019C",lat:40.7653,lng:-73.9868},
+    {name:"Casa Mexicana",address:"Midtown West, Manhattan",unitToken:"DM10019D",lat:40.7643,lng:-73.9775},
+    {name:"Trattoria Roma",address:"Midtown West, Manhattan",unitToken:"DM10019E",lat:40.7667,lng:-73.9912},
+    {name:"Jade Palace",address:"Midtown West, Manhattan",unitToken:"DM10019F",lat:40.7678,lng:-73.9807},
+    {name:"Bangkok Kitchen",address:"Midtown West, Manhattan",unitToken:"DM10019G",lat:40.7605,lng:-73.9905},
+    {name:"Banh Mi House",address:"Midtown West, Manhattan",unitToken:"DM10019H",lat:40.7698,lng:-73.9888}
+  ],
+  "11201": [
+    {name:"Saigon Kitchen",address:"Brooklyn Heights, Brooklyn",unitToken:"DM11201A",lat:40.6884,lng:-73.9831},
+    {name:"Tandoori Kitchen",address:"Brooklyn Heights, Brooklyn",unitToken:"DM11201B",lat:40.6903,lng:-73.9875},
+    {name:"Aegean Kitchen",address:"Brooklyn Heights, Brooklyn",unitToken:"DM11201C",lat:40.6879,lng:-73.9855},
+    {name:"Kimchi House",address:"Brooklyn Heights, Brooklyn",unitToken:"DM11201D",lat:40.7002,lng:-73.9881},
+    {name:"Ember & Oak",address:"Brooklyn Heights, Brooklyn",unitToken:"DM11201E",lat:40.6873,lng:-73.9919},
+    {name:"Joe's Burger Joint",address:"Brooklyn Heights, Brooklyn",unitToken:"DM11201F",lat:40.6893,lng:-73.9938},
+    {name:"Dark Horse Espresso",address:"Brooklyn Heights, Brooklyn",unitToken:"DM11201G",lat:40.6869,lng:-73.9899},
+    {name:"Golden Crust",address:"Brooklyn Heights, Brooklyn",unitToken:"DM11201H",lat:40.694,lng:-73.9957},
+    {name:"Wrap City",address:"Brooklyn Heights, Brooklyn",unitToken:"DM11201I",lat:40.7006,lng:-73.9951}
+  ],
+  "07302": [
+    {name:"The Bread Basket",address:"Downtown Jersey City",unitToken:"DM07302A",lat:40.7166,lng:-74.0477},
+    {name:"Green Machine",address:"Downtown Jersey City",unitToken:"DM07302B",lat:40.7215,lng:-74.0479},
+    {name:"Blue Fin Kitchen",address:"Downtown Jersey City",unitToken:"DM07302C",lat:40.7257,lng:-74.0407},
+    {name:"Low & Slow",address:"Downtown Jersey City",unitToken:"DM07302D",lat:40.717,lng:-74.0471},
+    {name:"Brick Oven Pizza",address:"Downtown Jersey City",unitToken:"DM07302E",lat:40.7101,lng:-74.0422},
+    {name:"Sunny Side Up",address:"Downtown Jersey City",unitToken:"DM07302F",lat:40.7099,lng:-74.0398},
+    {name:"Blue Nile",address:"Downtown Jersey City",unitToken:"DM07302G",lat:40.7109,lng:-74.0506},
+    {name:"Jerk Kitchen",address:"Downtown Jersey City",unitToken:"DM07302H",lat:40.718,lng:-74.0466},
+    {name:"Aleppo Kitchen",address:"Downtown Jersey City",unitToken:"DM07302I",lat:40.7184,lng:-74.0395},
+    {name:"The Porch",address:"Downtown Jersey City",unitToken:"DM07302J",lat:40.719,lng:-74.0472}
+  ],
+  "06510": [
+    {name:"Caribbean Flame",address:"Downtown New Haven",unitToken:"DM06510A",lat:41.3033,lng:-72.9343},
+    {name:"Beirut Bites",address:"Downtown New Haven",unitToken:"DM06510B",lat:41.3071,lng:-72.9284},
+    {name:"Biscuit House",address:"Downtown New Haven",unitToken:"DM06510C",lat:41.3111,lng:-72.9202},
+    {name:"Chez Marie",address:"Downtown New Haven",unitToken:"DM06510D",lat:41.3067,lng:-72.9305},
+    {name:"Zen Noodle Bar",address:"Downtown New Haven",unitToken:"DM06510E",lat:41.3043,lng:-72.9329},
+    {name:"El Camino Cantina",address:"Downtown New Haven",unitToken:"DM06510F",lat:41.3071,lng:-72.9314},
+    {name:"Il Forno",address:"Downtown New Haven",unitToken:"DM06510G",lat:41.3074,lng:-72.9221},
+    {name:"Szechuan Garden",address:"Downtown New Haven",unitToken:"DM06510H",lat:41.3011,lng:-72.9199}
+  ],
+  "02101": [
+    {name:"Wok & Roll",address:"Downtown Boston",unitToken:"DM02101A",lat:42.3676,lng:-71.0521},
+    {name:"Pad Thai House",address:"Downtown Boston",unitToken:"DM02101B",lat:42.3548,lng:-71.0591},
+    {name:"Vietnam Garden",address:"Downtown Boston",unitToken:"DM02101C",lat:42.3665,lng:-71.0643},
+    {name:"Spice Route",address:"Downtown Boston",unitToken:"DM02101D",lat:42.3563,lng:-71.0544},
+    {name:"Byblos Kitchen",address:"Downtown Boston",unitToken:"DM02101E",lat:42.3589,lng:-71.0516},
+    {name:"Bibimbap House",address:"Downtown Boston",unitToken:"DM02101F",lat:42.3627,lng:-71.0591},
+    {name:"Salt & Vine",address:"Downtown Boston",unitToken:"DM02101G",lat:42.3556,lng:-71.066},
+    {name:"The Corner Cafe",address:"Downtown Boston",unitToken:"DM02101H",lat:42.3531,lng:-71.0619},
+    {name:"Bean & Leaf",address:"Downtown Boston",unitToken:"DM02101I",lat:42.3597,lng:-71.0522}
+  ],
+  "02139": [
+    {name:"Liberty Grill",address:"Cambridge, MA",unitToken:"DM02139A",lat:42.3665,lng:-71.1096},
+    {name:"The Daily Grind",address:"Cambridge, MA",unitToken:"DM02139B",lat:42.3667,lng:-71.1166},
+    {name:"Sweet Crumbs",address:"Cambridge, MA",unitToken:"DM02139C",lat:42.3721,lng:-71.1026},
+    {name:"Bowl & Roll",address:"Cambridge, MA",unitToken:"DM02139D",lat:42.3749,lng:-71.1171},
+    {name:"Anchor & Tide",address:"Cambridge, MA",unitToken:"DM02139E",lat:42.3761,lng:-71.1087},
+    {name:"The Smoke Ring",address:"Cambridge, MA",unitToken:"DM02139F",lat:42.3689,lng:-71.1062},
+    {name:"Pie & Pint",address:"Cambridge, MA",unitToken:"DM02139G",lat:42.3719,lng:-71.107},
+    {name:"Eggs & Toast",address:"Cambridge, MA",unitToken:"DM02139H",lat:42.3707,lng:-71.1057},
+    {name:"Cafe Abyssinia",address:"Cambridge, MA",unitToken:"DM02139I",lat:42.3729,lng:-71.1017},
+    {name:"Tropical Kitchen",address:"Cambridge, MA",unitToken:"DM02139J",lat:42.3742,lng:-71.1096}
+  ],
+  "19103": [
+    {name:"Morning Table",address:"Center City, Philadelphia",unitToken:"DM19103A",lat:39.9589,lng:-75.1674},
+    {name:"Desta Kitchen",address:"Center City, Philadelphia",unitToken:"DM19103B",lat:39.9473,lng:-75.1682},
+    {name:"Rum & Spice",address:"Center City, Philadelphia",unitToken:"DM19103C",lat:39.9546,lng:-75.1657},
+    {name:"Damascus Table",address:"Center City, Philadelphia",unitToken:"DM19103D",lat:39.9449,lng:-75.1684},
+    {name:"Cornbread Kitchen",address:"Center City, Philadelphia",unitToken:"DM19103E",lat:39.9465,lng:-75.1674},
+    {name:"Le Petit Bistro",address:"Center City, Philadelphia",unitToken:"DM19103F",lat:39.959,lng:-75.1696},
+    {name:"Hana Izakaya",address:"Center City, Philadelphia",unitToken:"DM19103G",lat:39.9493,lng:-75.1781},
+    {name:"La Cocina",address:"Center City, Philadelphia",unitToken:"DM19103H",lat:39.9558,lng:-75.1679}
+  ],
+  "19147": [
+    {name:"Pueblo Viejo",address:"South Philadelphia",unitToken:"DM19147A",lat:39.9312,lng:-75.151},
+    {name:"Pasta Fresca",address:"South Philadelphia",unitToken:"DM19147B",lat:39.9373,lng:-75.1522},
+    {name:"Lucky Bamboo",address:"South Philadelphia",unitToken:"DM19147C",lat:39.9325,lng:-75.1634},
+    {name:"Siam Garden",address:"South Philadelphia",unitToken:"DM19147D",lat:39.9391,lng:-75.1567},
+    {name:"Pho 88",address:"South Philadelphia",unitToken:"DM19147E",lat:39.9274,lng:-75.1643},
+    {name:"Bombay Grill",address:"South Philadelphia",unitToken:"DM19147F",lat:39.9417,lng:-75.1568},
+    {name:"Cyprus Grill",address:"South Philadelphia",unitToken:"DM19147G",lat:39.9365,lng:-75.1631},
+    {name:"Korean BBQ House",address:"South Philadelphia",unitToken:"DM19147H",lat:39.9321,lng:-75.1511},
+    {name:"Harvest Table",address:"South Philadelphia",unitToken:"DM19147I",lat:39.9416,lng:-75.1621}
+  ],
+  "15213": [
+    {name:"Gangnam Kitchen",address:"Oakland, Pittsburgh",unitToken:"DM15213A",lat:40.438,lng:-79.9487},
+    {name:"The Copper Pot",address:"Oakland, Pittsburgh",unitToken:"DM15213B",lat:40.452,lng:-79.9492},
+    {name:"Patriot's Pub",address:"Oakland, Pittsburgh",unitToken:"DM15213C",lat:40.4502,lng:-79.9456},
+    {name:"Copper Kettle Coffee",address:"Oakland, Pittsburgh",unitToken:"DM15213D",lat:40.4505,lng:-79.9608},
+    {name:"Flour Power",address:"Oakland, Pittsburgh",unitToken:"DM15213E",lat:40.4489,lng:-79.9546},
+    {name:"Quick Bites",address:"Oakland, Pittsburgh",unitToken:"DM15213F",lat:40.4494,lng:-79.9569},
+    {name:"The Clam Shack",address:"Oakland, Pittsburgh",unitToken:"DM15213G",lat:40.4381,lng:-79.9472},
+    {name:"Ember BBQ",address:"Oakland, Pittsburgh",unitToken:"DM15213H",lat:40.44,lng:-79.9481},
+    {name:"Crust Kitchen",address:"Oakland, Pittsburgh",unitToken:"DM15213I",lat:40.4413,lng:-79.9485},
+    {name:"The Breakfast Club",address:"Oakland, Pittsburgh",unitToken:"DM15213J",lat:40.4368,lng:-79.9581}
+  ],
+  "21201": [
+    {name:"Char & Smoke",address:"Downtown Baltimore",unitToken:"DM21201A",lat:39.2962,lng:-76.6047},
+    {name:"Dough Boys",address:"Downtown Baltimore",unitToken:"DM21201B",lat:39.2927,lng:-76.6138},
+    {name:"Benedict Kitchen",address:"Downtown Baltimore",unitToken:"DM21201C",lat:39.2877,lng:-76.6198},
+    {name:"Ethiop Kitchen",address:"Downtown Baltimore",unitToken:"DM21201D",lat:39.2853,lng:-76.6048},
+    {name:"Calypso Kitchen",address:"Downtown Baltimore",unitToken:"DM21201E",lat:39.2841,lng:-76.6132},
+    {name:"Euphrates Kitchen",address:"Downtown Baltimore",unitToken:"DM21201F",lat:39.2894,lng:-76.6045},
+    {name:"Dixie Kitchen",address:"Downtown Baltimore",unitToken:"DM21201G",lat:39.2968,lng:-76.6172},
+    {name:"Maison Kitchen",address:"Downtown Baltimore",unitToken:"DM21201H",lat:39.2894,lng:-76.6119}
+  ],
+  "20001": [
+    {name:"Brasserie Blanc",address:"NoMa, Washington DC",unitToken:"DM20001A",lat:38.9102,lng:-77.0099},
+    {name:"Shogun Sushi",address:"NoMa, Washington DC",unitToken:"DM20001B",lat:38.9024,lng:-77.018},
+    {name:"El Jardin",address:"NoMa, Washington DC",unitToken:"DM20001C",lat:38.9092,lng:-77.0143},
+    {name:"Piccolo Mondo",address:"NoMa, Washington DC",unitToken:"DM20001D",lat:38.9136,lng:-77.0168},
+    {name:"Peking House",address:"NoMa, Washington DC",unitToken:"DM20001E",lat:38.9044,lng:-77.0137},
+    {name:"Lemongrass Thai",address:"NoMa, Washington DC",unitToken:"DM20001F",lat:38.9023,lng:-77.0143},
+    {name:"Hanoi Kitchen",address:"NoMa, Washington DC",unitToken:"DM20001G",lat:38.9112,lng:-77.0221},
+    {name:"Masala Kitchen",address:"NoMa, Washington DC",unitToken:"DM20001H",lat:38.9057,lng:-77.0116},
+    {name:"Delphi Kitchen",address:"NoMa, Washington DC",unitToken:"DM20001I",lat:38.9026,lng:-77.0123}
+  ],
+  "20036": [
+    {name:"Delhi Palace",address:"Dupont Circle, Washington DC",unitToken:"DM20036A",lat:38.9068,lng:-77.0443},
+    {name:"Ephesus Kitchen",address:"Dupont Circle, Washington DC",unitToken:"DM20036B",lat:38.9098,lng:-77.0387},
+    {name:"Hansik Kitchen",address:"Dupont Circle, Washington DC",unitToken:"DM20036C",lat:38.9043,lng:-77.05},
+    {name:"Sage & Stone",address:"Dupont Circle, Washington DC",unitToken:"DM20036D",lat:38.9117,lng:-77.046},
+    {name:"The Blue Plate",address:"Dupont Circle, Washington DC",unitToken:"DM20036E",lat:38.9054,lng:-77.0464},
+    {name:"Sunrise Roasters",address:"Dupont Circle, Washington DC",unitToken:"DM20036F",lat:38.904,lng:-77.0507},
+    {name:"Rise Bakery",address:"Dupont Circle, Washington DC",unitToken:"DM20036G",lat:38.9152,lng:-77.0502},
+    {name:"Chop Shop Kitchen",address:"Dupont Circle, Washington DC",unitToken:"DM20036H",lat:38.9108,lng:-77.0399},
+    {name:"Dockside Kitchen",address:"Dupont Circle, Washington DC",unitToken:"DM20036I",lat:38.908,lng:-77.049},
+    {name:"Flame & Bone",address:"Dupont Circle, Washington DC",unitToken:"DM20036J",lat:38.9159,lng:-77.0376}
+  ],
+  "30301": [
+    {name:"Daily Greens",address:"Midtown Atlanta",unitToken:"DM30301A",lat:33.7858,lng:-84.388},
+    {name:"Ebb & Flow",address:"Midtown Atlanta",unitToken:"DM30301B",lat:33.7816,lng:-84.3907},
+    {name:"Grill Master",address:"Midtown Atlanta",unitToken:"DM30301C",lat:33.7806,lng:-84.3787},
+    {name:"Fire & Slice",address:"Midtown Atlanta",unitToken:"DM30301D",lat:33.7891,lng:-84.382},
+    {name:"Crepe & Co",address:"Midtown Atlanta",unitToken:"DM30301E",lat:33.7831,lng:-84.38},
+    {name:"Fasika Kitchen",address:"Midtown Atlanta",unitToken:"DM30301F",lat:33.7866,lng:-84.3827},
+    {name:"Reggae Kitchen",address:"Midtown Atlanta",unitToken:"DM30301G",lat:33.7852,lng:-84.3839},
+    {name:"Fertile Crescent",address:"Midtown Atlanta",unitToken:"DM30301H",lat:33.7773,lng:-84.3813}
+  ],
+  "30307": [
+    {name:"Gaziantep Kitchen",address:"Little Five Points, Atlanta",unitToken:"DM30307A",lat:33.7698,lng:-84.3462},
+    {name:"Grits & Greens",address:"Little Five Points, Atlanta",unitToken:"DM30307B",lat:33.7734,lng:-84.3462},
+    {name:"Crepe Parisienne",address:"Little Five Points, Atlanta",unitToken:"DM30307C",lat:33.7763,lng:-84.3487},
+    {name:"Matcha House",address:"Little Five Points, Atlanta",unitToken:"DM30307D",lat:33.7681,lng:-84.3476},
+    {name:"Tortilla Factory",address:"Little Five Points, Atlanta",unitToken:"DM30307E",lat:33.7686,lng:-84.3447},
+    {name:"La Dolce Vita",address:"Little Five Points, Atlanta",unitToken:"DM30307F",lat:33.763,lng:-84.3367},
+    {name:"Dim Sum Palace",address:"Little Five Points, Atlanta",unitToken:"DM30307G",lat:33.7713,lng:-84.3389},
+    {name:"Chiang Mai Kitchen",address:"Little Five Points, Atlanta",unitToken:"DM30307H",lat:33.7712,lng:-84.3424},
+    {name:"Bun Bo Hue",address:"Little Five Points, Atlanta",unitToken:"DM30307I",lat:33.7741,lng:-84.3363}
+  ],
+  "28202": [
+    {name:"Basil Thai",address:"Uptown Charlotte",unitToken:"DM28202A",lat:35.2277,lng:-80.8393},
+    {name:"Com Tam Kitchen",address:"Uptown Charlotte",unitToken:"DM28202B",lat:35.2335,lng:-80.8433},
+    {name:"Ganges Kitchen",address:"Uptown Charlotte",unitToken:"DM28202C",lat:35.2269,lng:-80.8449},
+    {name:"Falafel House",address:"Uptown Charlotte",unitToken:"DM28202D",lat:35.2319,lng:-80.8395},
+    {name:"Itaewon Kitchen",address:"Uptown Charlotte",unitToken:"DM28202E",lat:35.2338,lng:-80.8354},
+    {name:"Root & Branch",address:"Uptown Charlotte",unitToken:"DM28202F",lat:35.2336,lng:-80.8416},
+    {name:"Crossroads Kitchen",address:"Uptown Charlotte",unitToken:"DM28202G",lat:35.2204,lng:-80.8442},
+    {name:"The Grind House",address:"Uptown Charlotte",unitToken:"DM28202H",lat:35.222,lng:-80.8469},
+    {name:"Knead Bakery",address:"Uptown Charlotte",unitToken:"DM28202I",lat:35.2264,lng:-80.8457},
+    {name:"Eatwell Kitchen",address:"Uptown Charlotte",unitToken:"DM28202J",lat:35.2236,lng:-80.8359}
+  ],
+  "27601": [
+    {name:"Velvet Bean",address:"Downtown Raleigh",unitToken:"DM27601A",lat:35.785,lng:-78.6387},
+    {name:"The Rolling Pin",address:"Downtown Raleigh",unitToken:"DM27601B",lat:35.7724,lng:-78.631},
+    {name:"Fast & Fresh",address:"Downtown Raleigh",unitToken:"DM27601C",lat:35.7727,lng:-78.6309},
+    {name:"Fish Market Kitchen",address:"Downtown Raleigh",unitToken:"DM27601D",lat:35.7721,lng:-78.6422},
+    {name:"Hickory House",address:"Downtown Raleigh",unitToken:"DM27601E",lat:35.7815,lng:-78.6424},
+    {name:"Good Pie",address:"Downtown Raleigh",unitToken:"DM27601F",lat:35.7734,lng:-78.631},
+    {name:"Dawn Kitchen",address:"Downtown Raleigh",unitToken:"DM27601G",lat:35.7757,lng:-78.6403},
+    {name:"Gojo Kitchen",address:"Downtown Raleigh",unitToken:"DM27601H",lat:35.787,lng:-78.6347}
+  ],
+  "37203": [
+    {name:"Habesha Kitchen",address:"Midtown Nashville",unitToken:"DM37203A",lat:36.1584,lng:-86.7999},
+    {name:"Plantain House",address:"Midtown Nashville",unitToken:"DM37203B",lat:36.1522,lng:-86.7871},
+    {name:"Halal Kitchen",address:"Midtown Nashville",unitToken:"DM37203C",lat:36.1581,lng:-86.7984},
+    {name:"Honeysuckle Kitchen",address:"Midtown Nashville",unitToken:"DM37203D",lat:36.1563,lng:-86.7977},
+    {name:"Eclair Kitchen",address:"Midtown Nashville",unitToken:"DM37203E",lat:36.1478,lng:-86.7907},
+    {name:"Tanuki Ramen",address:"Midtown Nashville",unitToken:"DM37203F",lat:36.1557,lng:-86.7925},
+    {name:"Taco Loco",address:"Midtown Nashville",unitToken:"DM37203G",lat:36.1515,lng:-86.791},
+    {name:"Osteria Toscana",address:"Midtown Nashville",unitToken:"DM37203H",lat:36.1534,lng:-86.8014},
+    {name:"Dragon Gate",address:"Midtown Nashville",unitToken:"DM37203I",lat:36.1447,lng:-86.7862}
+  ],
+  "37206": [
+    {name:"Nonna's Kitchen",address:"East Nashville",unitToken:"DM37206A",lat:36.1814,lng:-86.7421},
+    {name:"Emperor's Garden",address:"East Nashville",unitToken:"DM37206B",lat:36.1855,lng:-86.7448},
+    {name:"Coconut Thai",address:"East Nashville",unitToken:"DM37206C",lat:36.1825,lng:-86.7417},
+    {name:"Da Nang Kitchen",address:"East Nashville",unitToken:"DM37206D",lat:36.1796,lng:-86.7439},
+    {name:"Haveli",address:"East Nashville",unitToken:"DM37206E",lat:36.1746,lng:-86.7419},
+    {name:"Greek Taverna",address:"East Nashville",unitToken:"DM37206F",lat:36.1792,lng:-86.7384},
+    {name:"Jjigae House",address:"East Nashville",unitToken:"DM37206G",lat:36.178,lng:-86.7439},
+    {name:"The Gilded Fork",address:"East Nashville",unitToken:"DM37206H",lat:36.1758,lng:-86.745},
+    {name:"Eagle's Nest Diner",address:"East Nashville",unitToken:"DM37206I",lat:36.1813,lng:-86.7447},
+    {name:"Morning Glory Coffee",address:"East Nashville",unitToken:"DM37206J",lat:36.1853,lng:-86.7477}
+  ],
+  "32801": [
+    {name:"Smoke & Mirrors",address:"Downtown Orlando",unitToken:"DM32801A",lat:28.5381,lng:-81.3751},
+    {name:"Five Points Grill",address:"Downtown Orlando",unitToken:"DM32801B",lat:28.5406,lng:-81.3793},
+    {name:"The Roastery",address:"Downtown Orlando",unitToken:"DM32801C",lat:28.5318,lng:-81.3837},
+    {name:"Crumb & Crust",address:"Downtown Orlando",unitToken:"DM32801D",lat:28.5352,lng:-81.3779},
+    {name:"Grain Bowl Co",address:"Downtown Orlando",unitToken:"DM32801E",lat:28.5388,lng:-81.3804},
+    {name:"Gulf Kitchen",address:"Downtown Orlando",unitToken:"DM32801F",lat:28.5356,lng:-81.376},
+    {name:"Iron Pit BBQ",address:"Downtown Orlando",unitToken:"DM32801G",lat:28.5343,lng:-81.3853},
+    {name:"Hot Slice",address:"Downtown Orlando",unitToken:"DM32801H",lat:28.5322,lng:-81.3786}
+  ],
+  "33101": [
+    {name:"Il Pizzaiolo",address:"Downtown Miami",unitToken:"DM33101A",lat:25.7567,lng:-80.1963},
+    {name:"Early Bird Kitchen",address:"Downtown Miami",unitToken:"DM33101B",lat:25.7653,lng:-80.1842},
+    {name:"Injera House",address:"Downtown Miami",unitToken:"DM33101C",lat:25.7582,lng:-80.1982},
+    {name:"Mango Kitchen",address:"Downtown Miami",unitToken:"DM33101D",lat:25.7573,lng:-80.1969},
+    {name:"Isfahan Kitchen",address:"Downtown Miami",unitToken:"DM33101E",lat:25.7622,lng:-80.1954},
+    {name:"Jubilee Kitchen",address:"Downtown Miami",unitToken:"DM33101F",lat:25.7584,lng:-80.1847},
+    {name:"Fleur de Lis",address:"Downtown Miami",unitToken:"DM33101G",lat:25.7616,lng:-80.1858},
+    {name:"Fuji Sushi Bar",address:"Downtown Miami",unitToken:"DM33101H",lat:25.7612,lng:-80.1928},
+    {name:"Mi Tierra",address:"Downtown Miami",unitToken:"DM33101I",lat:25.7577,lng:-80.186}
+  ],
+  "33139": [
+    {name:"Miso Kitchen",address:"South Beach, Miami",unitToken:"DM33139A",lat:25.7891,lng:-80.1368},
+    {name:"Salsa Verde",address:"South Beach, Miami",unitToken:"DM33139B",lat:25.7836,lng:-80.1356},
+    {name:"Vino e Pasta",address:"South Beach, Miami",unitToken:"DM33139C",lat:25.7841,lng:-80.134},
+    {name:"Fortune Kitchen",address:"South Beach, Miami",unitToken:"DM33139D",lat:25.7894,lng:-80.1285},
+    {name:"Dara Thai",address:"South Beach, Miami",unitToken:"DM33139E",lat:25.7951,lng:-80.1319},
+    {name:"Pho Express",address:"South Beach, Miami",unitToken:"DM33139F",lat:25.7875,lng:-80.1286},
+    {name:"India Gate",address:"South Beach, Miami",unitToken:"DM33139G",lat:25.7918,lng:-80.137},
+    {name:"Hummus Kitchen",address:"South Beach, Miami",unitToken:"DM33139H",lat:25.7979,lng:-80.1347},
+    {name:"Kimbap Kitchen",address:"South Beach, Miami",unitToken:"DM33139I",lat:25.7933,lng:-80.1355},
+    {name:"Dusk & Dawn",address:"South Beach, Miami",unitToken:"DM33139J",lat:25.7839,lng:-80.138}
+  ],
+  "33602": [
+    {name:"Istanbul Grill",address:"Downtown Tampa",unitToken:"DM33602A",lat:27.9521,lng:-82.4605},
+    {name:"Lotte Kitchen",address:"Downtown Tampa",unitToken:"DM33602B",lat:27.9539,lng:-82.454},
+    {name:"The Velvet Pear",address:"Downtown Tampa",unitToken:"DM33602C",lat:27.9536,lng:-82.4504},
+    {name:"The Griddle",address:"Downtown Tampa",unitToken:"DM33602D",lat:27.952,lng:-82.4523},
+    {name:"Black Cat Coffee",address:"Downtown Tampa",unitToken:"DM33602E",lat:27.9444,lng:-82.4616},
+    {name:"Proof Bakery",address:"Downtown Tampa",unitToken:"DM33602F",lat:27.9558,lng:-82.4641},
+    {name:"Healthy Harvest",address:"Downtown Tampa",unitToken:"DM33602G",lat:27.9521,lng:-82.452},
+    {name:"Hook & Line",address:"Downtown Tampa",unitToken:"DM33602H",lat:27.9496,lng:-82.4577}
+  ],
+  "32601": [
+    {name:"Island Seafood",address:"Downtown Gainesville",unitToken:"DM32601A",lat:29.65,lng:-82.3284},
+    {name:"Joint BBQ",address:"Downtown Gainesville",unitToken:"DM32601B",lat:29.6506,lng:-82.3232},
+    {name:"Joey's Pizza",address:"Downtown Gainesville",unitToken:"DM32601C",lat:29.6554,lng:-82.3231},
+    {name:"Flip Kitchen",address:"Downtown Gainesville",unitToken:"DM32601D",lat:29.6473,lng:-82.322},
+    {name:"Jebena Kitchen",address:"Downtown Gainesville",unitToken:"DM32601E",lat:29.653,lng:-82.3325},
+    {name:"Coconut Grove Kitchen",address:"Downtown Gainesville",unitToken:"DM32601F",lat:29.6567,lng:-82.3236},
+    {name:"Kabob House",address:"Downtown Gainesville",unitToken:"DM32601G",lat:29.6464,lng:-82.3245},
+    {name:"Kudzu Kitchen",address:"Downtown Gainesville",unitToken:"DM32601H",lat:29.6465,lng:-82.3234},
+    {name:"Gateau Kitchen",address:"Downtown Gainesville",unitToken:"DM32601I",lat:29.6591,lng:-82.3253}
+  ],
+  "29401": [
+    {name:"Low Country Kitchen",address:"Downtown Charleston",unitToken:"DM29401A",lat:32.7736,lng:-79.9374},
+    {name:"La Boulangerie",address:"Downtown Charleston",unitToken:"DM29401B",lat:32.7751,lng:-79.9312},
+    {name:"Okami Sushi",address:"Downtown Charleston",unitToken:"DM29401C",lat:32.7815,lng:-79.9303},
+    {name:"El Ranchito",address:"Downtown Charleston",unitToken:"DM29401D",lat:32.7735,lng:-79.9339},
+    {name:"Amalfi Coast",address:"Downtown Charleston",unitToken:"DM29401E",lat:32.7823,lng:-79.9259},
+    {name:"Great Wall Kitchen",address:"Downtown Charleston",unitToken:"DM29401F",lat:32.7824,lng:-79.9317},
+    {name:"Erawan Thai",address:"Downtown Charleston",unitToken:"DM29401G",lat:32.7768,lng:-79.9291},
+    {name:"Goi Cuon House",address:"Downtown Charleston",unitToken:"DM29401H",lat:32.7756,lng:-79.9383},
+    {name:"Jaipur Kitchen",address:"Downtown Charleston",unitToken:"DM29401I",lat:32.7706,lng:-79.9345},
+    {name:"Jerusalem Kitchen",address:"Downtown Charleston",unitToken:"DM29401J",lat:32.7763,lng:-79.9386}
+  ],
+  "70112": [
+    {name:"Hue Kitchen",address:"Central Business District, New Orleans",unitToken:"DM70112A",lat:29.9559,lng:-90.0681},
+    {name:"Karma Kitchen",address:"Central Business District, New Orleans",unitToken:"DM70112B",lat:29.9433,lng:-90.073},
+    {name:"Kalamata Kitchen",address:"Central Business District, New Orleans",unitToken:"DM70112C",lat:29.9505,lng:-90.0776},
+    {name:"Myeongdong Kitchen",address:"Central Business District, New Orleans",unitToken:"DM70112D",lat:29.9511,lng:-90.068},
+    {name:"Iron & Ivy",address:"Central Business District, New Orleans",unitToken:"DM70112E",lat:29.9475,lng:-90.0661},
+    {name:"Hometown Kitchen",address:"Central Business District, New Orleans",unitToken:"DM70112F",lat:29.9504,lng:-90.0772},
+    {name:"Crema Cafe",address:"Central Business District, New Orleans",unitToken:"DM70112G",lat:29.9512,lng:-90.0654},
+    {name:"Buttercream Dreams",address:"Central Business District, New Orleans",unitToken:"DM70112H",lat:29.9475,lng:-90.0669}
+  ],
+  "70116": [
+    {name:"Dough & Co",address:"French Quarter, New Orleans",unitToken:"DM70116A",lat:29.9653,lng:-90.0643},
+    {name:"Just Salad",address:"French Quarter, New Orleans",unitToken:"DM70116B",lat:29.9549,lng:-90.0676},
+    {name:"Jetty Kitchen",address:"French Quarter, New Orleans",unitToken:"DM70116C",lat:29.9664,lng:-90.0646},
+    {name:"Kettle & Flame",address:"French Quarter, New Orleans",unitToken:"DM70116D",lat:29.959,lng:-90.0669},
+    {name:"King of Pizza",address:"French Quarter, New Orleans",unitToken:"DM70116E",lat:29.9591,lng:-90.0651},
+    {name:"Griddle Cafe",address:"French Quarter, New Orleans",unitToken:"DM70116F",lat:29.9661,lng:-90.0686},
+    {name:"Kitfo House",address:"French Quarter, New Orleans",unitToken:"DM70116G",lat:29.9641,lng:-90.0658},
+    {name:"Bahama Kitchen",address:"French Quarter, New Orleans",unitToken:"DM70116H",lat:29.958,lng:-90.0578},
+    {name:"Levantine Kitchen",address:"French Quarter, New Orleans",unitToken:"DM70116I",lat:29.9662,lng:-90.0597}
+  ],
+  "35203": [
+    {name:"Conch Kitchen",address:"Downtown Birmingham",unitToken:"DM35203A",lat:33.5185,lng:-86.8178},
+    {name:"Marrakech Kitchen",address:"Downtown Birmingham",unitToken:"DM35203B",lat:33.5159,lng:-86.8168},
+    {name:"Mason Jar Kitchen",address:"Downtown Birmingham",unitToken:"DM35203C",lat:33.5122,lng:-86.8038},
+    {name:"Moulin Kitchen",address:"Downtown Birmingham",unitToken:"DM35203D",lat:33.5129,lng:-86.8045},
+    {name:"Raku Izakaya",address:"Downtown Birmingham",unitToken:"DM35203E",lat:33.5181,lng:-86.8029},
+    {name:"La Paloma",address:"Downtown Birmingham",unitToken:"DM35203F",lat:33.5217,lng:-86.808},
+    {name:"Ciao Bella",address:"Downtown Birmingham",unitToken:"DM35203G",lat:33.5242,lng:-86.8047},
+    {name:"Hunan Express",address:"Downtown Birmingham",unitToken:"DM35203H",lat:33.5206,lng:-86.8042},
+    {name:"Golden Thai",address:"Downtown Birmingham",unitToken:"DM35203I",lat:33.5112,lng:-86.8173},
+    {name:"Indochine Kitchen",address:"Downtown Birmingham",unitToken:"DM35203J",lat:33.5253,lng:-86.8024}
+  ],
+  "60601": [
+    {name:"Imperial Garden",address:"The Loop, Chicago",unitToken:"DM60601A",lat:41.8808,lng:-87.6342},
+    {name:"Thai Jasmine",address:"The Loop, Chicago",unitToken:"DM60601B",lat:41.8879,lng:-87.6287},
+    {name:"Pho Pasteur",address:"The Loop, Chicago",unitToken:"DM60601C",lat:41.8884,lng:-87.6351},
+    {name:"Lahore Grill",address:"The Loop, Chicago",unitToken:"DM60601D",lat:41.8786,lng:-87.6298},
+    {name:"Levant Kitchen",address:"The Loop, Chicago",unitToken:"DM60601E",lat:41.8824,lng:-87.6267},
+    {name:"Namsan Kitchen",address:"The Loop, Chicago",unitToken:"DM60601F",lat:41.8766,lng:-87.6345},
+    {name:"The Painted Plate",address:"The Loop, Chicago",unitToken:"DM60601G",lat:41.8838,lng:-87.6319},
+    {name:"Independence Grill",address:"The Loop, Chicago",unitToken:"DM60601H",lat:41.8762,lng:-87.6284}
+  ],
+  "60614": [
+    {name:"Jack's BBQ",address:"Lincoln Park, Chicago",unitToken:"DM60614A",lat:41.9175,lng:-87.6591},
+    {name:"Double Shot",address:"Lincoln Park, Chicago",unitToken:"DM60614B",lat:41.9278,lng:-87.6485},
+    {name:"Oven Fresh",address:"Lincoln Park, Chicago",unitToken:"DM60614C",lat:41.9205,lng:-87.6538},
+    {name:"Kitchen Express",address:"Lincoln Park, Chicago",unitToken:"DM60614D",lat:41.9236,lng:-87.6525},
+    {name:"Ketch Seafood",address:"Lincoln Park, Chicago",unitToken:"DM60614E",lat:41.9269,lng:-87.6561},
+    {name:"Longhorn BBQ",address:"Lincoln Park, Chicago",unitToken:"DM60614F",lat:41.9151,lng:-87.6532},
+    {name:"Luca's Pizza",address:"Lincoln Park, Chicago",unitToken:"DM60614G",lat:41.9181,lng:-87.6481},
+    {name:"Hash House",address:"Lincoln Park, Chicago",unitToken:"DM60614H",lat:41.9197,lng:-87.6592},
+    {name:"Lucy Kitchen",address:"Lincoln Park, Chicago",unitToken:"DM60614I",lat:41.9259,lng:-87.6437}
+  ],
+  "60622": [
+    {name:"In the Morning",address:"Wicker Park, Chicago",unitToken:"DM60622A",lat:41.9056,lng:-87.6721},
+    {name:"Makeda Kitchen",address:"Wicker Park, Chicago",unitToken:"DM60622B",lat:41.9061,lng:-87.6817},
+    {name:"Dominica Kitchen",address:"Wicker Park, Chicago",unitToken:"DM60622C",lat:41.8972,lng:-87.6824},
+    {name:"Nablus Kitchen",address:"Wicker Park, Chicago",unitToken:"DM60622D",lat:41.9058,lng:-87.6731},
+    {name:"Peach Tree Kitchen",address:"Wicker Park, Chicago",unitToken:"DM60622E",lat:41.9038,lng:-87.6709},
+    {name:"Patisserie Jolie",address:"Wicker Park, Chicago",unitToken:"DM60622F",lat:41.8986,lng:-87.6783},
+    {name:"Nori Sushi",address:"Wicker Park, Chicago",unitToken:"DM60622G",lat:41.9054,lng:-87.684},
+    {name:"Taqueria Luna",address:"Wicker Park, Chicago",unitToken:"DM60622H",lat:41.9057,lng:-87.6826},
+    {name:"Da Vinci's",address:"Wicker Park, Chicago",unitToken:"DM60622I",lat:41.9077,lng:-87.6795},
+    {name:"Jasmine Kitchen",address:"Wicker Park, Chicago",unitToken:"DM60622J",lat:41.907,lng:-87.6813}
+  ],
+  "48201": [
+    {name:"Casa del Sol",address:"Midtown Detroit",unitToken:"DM48201A",lat:42.3486,lng:-83.0591},
+    {name:"Enzo's Ristorante",address:"Midtown Detroit",unitToken:"DM48201B",lat:42.346,lng:-83.0563},
+    {name:"Kung Pao House",address:"Midtown Detroit",unitToken:"DM48201C",lat:42.3452,lng:-83.0602},
+    {name:"Krung Thep",address:"Midtown Detroit",unitToken:"DM48201D",lat:42.3439,lng:-83.0574},
+    {name:"Pho King Good",address:"Midtown Detroit",unitToken:"DM48201E",lat:42.339,lng:-83.0511},
+    {name:"Madras Kitchen",address:"Midtown Detroit",unitToken:"DM48201F",lat:42.3417,lng:-83.0565},
+    {name:"Mykonos Grill",address:"Midtown Detroit",unitToken:"DM48201G",lat:42.3439,lng:-83.0544},
+    {name:"Ojingeo Kitchen",address:"Midtown Detroit",unitToken:"DM48201H",lat:42.3481,lng:-83.0621}
+  ],
+  "48104": [
+    {name:"Pajeon House",address:"Downtown Ann Arbor",unitToken:"DM48104A",lat:42.2732,lng:-83.7369},
+    {name:"Moss & Mortar",address:"Downtown Ann Arbor",unitToken:"DM48104B",lat:42.2874,lng:-83.7475},
+    {name:"King Street Grill",address:"Downtown Ann Arbor",unitToken:"DM48104C",lat:42.286,lng:-83.7364},
+    {name:"Espresso Lane",address:"Downtown Ann Arbor",unitToken:"DM48104D",lat:42.2793,lng:-83.7488},
+    {name:"The Pastry Shop",address:"Downtown Ann Arbor",unitToken:"DM48104E",lat:42.2887,lng:-83.7491},
+    {name:"Lean & Green",address:"Downtown Ann Arbor",unitToken:"DM48104F",lat:42.275,lng:-83.7437},
+    {name:"Lobster Pot",address:"Downtown Ann Arbor",unitToken:"DM48104G",lat:42.2839,lng:-83.7424},
+    {name:"Mesquite Kitchen",address:"Downtown Ann Arbor",unitToken:"DM48104H",lat:42.2844,lng:-83.7368},
+    {name:"Margherita's",address:"Downtown Ann Arbor",unitToken:"DM48104I",lat:42.2861,lng:-83.7411}
+  ],
+  "55401": [
+    {name:"Nub's BBQ",address:"Downtown Minneapolis",unitToken:"DM55401A",lat:44.9808,lng:-93.2695},
+    {name:"Napoli Pizza",address:"Downtown Minneapolis",unitToken:"DM55401B",lat:44.9835,lng:-93.2714},
+    {name:"Jam Kitchen",address:"Downtown Minneapolis",unitToken:"DM55401C",lat:44.9785,lng:-93.2574},
+    {name:"Nile Kitchen",address:"Downtown Minneapolis",unitToken:"DM55401D",lat:44.9762,lng:-93.27},
+    {name:"Havana Kitchen",address:"Downtown Minneapolis",unitToken:"DM55401E",lat:44.9713,lng:-93.2696},
+    {name:"Oud Kitchen",address:"Downtown Minneapolis",unitToken:"DM55401F",lat:44.9853,lng:-93.2722},
+    {name:"Sassafras Kitchen",address:"Downtown Minneapolis",unitToken:"DM55401G",lat:44.9856,lng:-93.2604},
+    {name:"Ratatouille Kitchen",address:"Downtown Minneapolis",unitToken:"DM55401H",lat:44.9831,lng:-93.2641},
+    {name:"Yoshi Ramen",address:"Downtown Minneapolis",unitToken:"DM55401I",lat:44.9828,lng:-93.2693},
+    {name:"El Fuego",address:"Downtown Minneapolis",unitToken:"DM55401J",lat:44.9824,lng:-93.2635}
+  ],
+  "55102": [
+    {name:"Soufflé Kitchen",address:"Cathedral Hill, St. Paul",unitToken:"DM55102A",lat:44.9497,lng:-93.1043},
+    {name:"Kaze Japanese",address:"Cathedral Hill, St. Paul",unitToken:"DM55102B",lat:44.9357,lng:-93.099},
+    {name:"La Mesa",address:"Cathedral Hill, St. Paul",unitToken:"DM55102C",lat:44.9396,lng:-93.1003},
+    {name:"Fratelli's",address:"Cathedral Hill, St. Paul",unitToken:"DM55102D",lat:44.9342,lng:-93.1087},
+    {name:"Lotus Garden",address:"Cathedral Hill, St. Paul",unitToken:"DM55102E",lat:44.9406,lng:-93.1111},
+    {name:"Thai Lotus",address:"Cathedral Hill, St. Paul",unitToken:"DM55102F",lat:44.9411,lng:-93.1071},
+    {name:"Lemongrass Saigon",address:"Cathedral Hill, St. Paul",unitToken:"DM55102G",lat:44.9411,lng:-93.1094},
+    {name:"Naan & Curry",address:"Cathedral Hill, St. Paul",unitToken:"DM55102H",lat:44.9455,lng:-93.0984}
+  ],
+  "53202": [
+    {name:"Om Kitchen",address:"East Town, Milwaukee",unitToken:"DM53202A",lat:43.0357,lng:-87.9042},
+    {name:"Tigris Kitchen",address:"East Town, Milwaukee",unitToken:"DM53202B",lat:43.0469,lng:-87.9009},
+    {name:"Ramyeon House",address:"East Town, Milwaukee",unitToken:"DM53202C",lat:43.0326,lng:-87.9031},
+    {name:"The Wild Fennel",address:"East Town, Milwaukee",unitToken:"DM53202D",lat:43.0453,lng:-87.9093},
+    {name:"The Local",address:"East Town, Milwaukee",unitToken:"DM53202E",lat:43.0329,lng:-87.9045},
+    {name:"French Press Cafe",address:"East Town, Milwaukee",unitToken:"DM53202F",lat:43.0423,lng:-87.9084},
+    {name:"Whisk Bakery",address:"East Town, Milwaukee",unitToken:"DM53202G",lat:43.0356,lng:-87.9064},
+    {name:"Mix & Match Kitchen",address:"East Town, Milwaukee",unitToken:"DM53202H",lat:43.0436,lng:-87.9127},
+    {name:"Marina Kitchen",address:"East Town, Milwaukee",unitToken:"DM53202I",lat:43.0449,lng:-87.9057}
+  ],
+  "43215": [
+    {name:"Nourish Kitchen",address:"Downtown Columbus",unitToken:"DM43215A",lat:39.9601,lng:-82.9945},
+    {name:"Neptune's Table",address:"Downtown Columbus",unitToken:"DM43215B",lat:39.9664,lng:-83.0023},
+    {name:"Oak Pit BBQ",address:"Downtown Columbus",unitToken:"DM43215C",lat:39.9582,lng:-83.0037},
+    {name:"Original Pie",address:"Downtown Columbus",unitToken:"DM43215D",lat:39.9685,lng:-82.9977},
+    {name:"Kitchen Table",address:"Downtown Columbus",unitToken:"DM43215E",lat:39.9547,lng:-83.0073},
+    {name:"Queen of Sheba",address:"Downtown Columbus",unitToken:"DM43215F",lat:39.9651,lng:-83.0027},
+    {name:"Jamaica Kitchen",address:"Downtown Columbus",unitToken:"DM43215G",lat:39.9542,lng:-82.9934},
+    {name:"Persian Kitchen",address:"Downtown Columbus",unitToken:"DM43215H",lat:39.9639,lng:-83.0021},
+    {name:"Tupelo Kitchen",address:"Downtown Columbus",unitToken:"DM43215I",lat:39.9683,lng:-83.0019},
+    {name:"Tarte Kitchen",address:"Downtown Columbus",unitToken:"DM43215J",lat:39.954,lng:-83.0041}
+  ],
+  "44113": [
+    {name:"Sahara Kitchen",address:"Ohio City, Cleveland",unitToken:"DM44113A",lat:41.4786,lng:-81.7031},
+    {name:"Azalea Kitchen",address:"Ohio City, Cleveland",unitToken:"DM44113B",lat:41.4846,lng:-81.6976},
+    {name:"Vin Rouge",address:"Ohio City, Cleveland",unitToken:"DM44113C",lat:41.4828,lng:-81.699},
+    {name:"Sapporo Ramen",address:"Ohio City, Cleveland",unitToken:"DM44113D",lat:41.4898,lng:-81.6977},
+    {name:"Burrito Bandido",address:"Ohio City, Cleveland",unitToken:"DM44113E",lat:41.4867,lng:-81.7009},
+    {name:"Giardino",address:"Ohio City, Cleveland",unitToken:"DM44113F",lat:41.4918,lng:-81.6979},
+    {name:"Mandarin House",address:"Ohio City, Cleveland",unitToken:"DM44113G",lat:41.4798,lng:-81.7},
+    {name:"Mango Thai",address:"Ohio City, Cleveland",unitToken:"DM44113H",lat:41.4825,lng:-81.7083}
+  ],
+  "46204": [
+    {name:"Noodle Thai",address:"Downtown Indianapolis",unitToken:"DM46204A",lat:39.7709,lng:-86.165},
+    {name:"Mekong Kitchen",address:"Downtown Indianapolis",unitToken:"DM46204B",lat:39.7759,lng:-86.1646},
+    {name:"Punjab Grill",address:"Downtown Indianapolis",unitToken:"DM46204C",lat:39.7664,lng:-86.1588},
+    {name:"Ottoman Kitchen",address:"Downtown Indianapolis",unitToken:"DM46204D",lat:39.7654,lng:-86.1609},
+    {name:"Samgyeopsal House",address:"Downtown Indianapolis",unitToken:"DM46204E",lat:39.7618,lng:-86.1653},
+    {name:"Ash & Elm",address:"Downtown Indianapolis",unitToken:"DM46204F",lat:39.7703,lng:-86.1553},
+    {name:"Maple Street Kitchen",address:"Downtown Indianapolis",unitToken:"DM46204G",lat:39.771,lng:-86.1583},
+    {name:"Golden Bean",address:"Downtown Indianapolis",unitToken:"DM46204H",lat:39.7648,lng:-86.154},
+    {name:"Artisan Bread Co",address:"Downtown Indianapolis",unitToken:"DM46204I",lat:39.7673,lng:-86.1616}
+  ],
+  "63101": [
+    {name:"Half & Half Coffee",address:"Downtown St. Louis",unitToken:"DM63101A",lat:38.6268,lng:-90.1967},
+    {name:"Baker's Dozen",address:"Downtown St. Louis",unitToken:"DM63101B",lat:38.6253,lng:-90.1978},
+    {name:"On the Go Kitchen",address:"Downtown St. Louis",unitToken:"DM63101C",lat:38.6238,lng:-90.204},
+    {name:"Ocean Grill",address:"Downtown St. Louis",unitToken:"DM63101D",lat:38.6231,lng:-90.2022},
+    {name:"Pitmaster's",address:"Downtown St. Louis",unitToken:"DM63101E",lat:38.631,lng:-90.2046},
+    {name:"Pizza Republic",address:"Downtown St. Louis",unitToken:"DM63101F",lat:38.6303,lng:-90.1994},
+    {name:"Lunchbox Kitchen",address:"Downtown St. Louis",unitToken:"DM63101G",lat:38.6319,lng:-90.2062},
+    {name:"Ras Kitchen",address:"Downtown St. Louis",unitToken:"DM63101H",lat:38.6197,lng:-90.2071},
+    {name:"Kingston Kitchen",address:"Downtown St. Louis",unitToken:"DM63101I",lat:38.6328,lng:-90.1982},
+    {name:"Tehran Kitchen",address:"Downtown St. Louis",unitToken:"DM63101J",lat:38.6304,lng:-90.2007}
+  ],
+  "64108": [
+    {name:"Sheba Kitchen",address:"Crossroads, Kansas City",unitToken:"DM64108A",lat:39.0767,lng:-94.5884},
+    {name:"Lime & Coconut",address:"Crossroads, Kansas City",unitToken:"DM64108B",lat:39.0838,lng:-94.5826},
+    {name:"Arak Kitchen",address:"Crossroads, Kansas City",unitToken:"DM64108C",lat:39.0834,lng:-94.5919},
+    {name:"Bayou Kitchen",address:"Crossroads, Kansas City",unitToken:"DM64108D",lat:39.0828,lng:-94.5923},
+    {name:"Baguette House",address:"Crossroads, Kansas City",unitToken:"DM64108E",lat:39.0883,lng:-94.5901},
+    {name:"Umami Sushi",address:"Crossroads, Kansas City",unitToken:"DM64108F",lat:39.0776,lng:-94.5835},
+    {name:"El Nopal",address:"Crossroads, Kansas City",unitToken:"DM64108G",lat:39.0795,lng:-94.5812},
+    {name:"Luna Rossa",address:"Crossroads, Kansas City",unitToken:"DM64108H",lat:39.0917,lng:-94.5833}
+  ],
+  "68102": [
+    {name:"Mamma Mia's",address:"Old Market, Omaha",unitToken:"DM68102A",lat:41.2501,lng:-95.9384},
+    {name:"New Shanghai",address:"Old Market, Omaha",unitToken:"DM68102B",lat:41.2509,lng:-95.9304},
+    {name:"Thai Palace",address:"Old Market, Omaha",unitToken:"DM68102C",lat:41.2637,lng:-95.9325},
+    {name:"Pho Noodle House",address:"Old Market, Omaha",unitToken:"DM68102D",lat:41.2575,lng:-95.9332},
+    {name:"Rasa Kitchen",address:"Old Market, Omaha",unitToken:"DM68102E",lat:41.2588,lng:-95.9267},
+    {name:"Pita Palace",address:"Old Market, Omaha",unitToken:"DM68102F",lat:41.2536,lng:-95.9355},
+    {name:"Tteokbokki House",address:"Old Market, Omaha",unitToken:"DM68102G",lat:41.2586,lng:-95.9298},
+    {name:"The Broken Yolk",address:"Old Market, Omaha",unitToken:"DM68102H",lat:41.2541,lng:-95.9413},
+    {name:"Nick's Diner",address:"Old Market, Omaha",unitToken:"DM68102I",lat:41.2491,lng:-95.9366}
+  ],
+  "53703": [
+    {name:"Grain & Grist",address:"Capitol Square, Madison",unitToken:"DM53703A",lat:43.0754,lng:-89.3936},
+    {name:"Old Town Grill",address:"Capitol Square, Madison",unitToken:"DM53703B",lat:43.0746,lng:-89.403},
+    {name:"Ivory Cup",address:"Capitol Square, Madison",unitToken:"DM53703C",lat:43.0804,lng:-89.3974},
+    {name:"Croissant Corner",address:"Capitol Square, Madison",unitToken:"DM53703D",lat:43.0796,lng:-89.4001},
+    {name:"Power Bowl",address:"Capitol Square, Madison",unitToken:"DM53703E",lat:43.0748,lng:-89.4012},
+    {name:"Pier Kitchen",address:"Capitol Square, Madison",unitToken:"DM53703F",lat:43.0668,lng:-89.3948},
+    {name:"Q & Brew",address:"Capitol Square, Madison",unitToken:"DM53703G",lat:43.0664,lng:-89.3989},
+    {name:"Quick Slice",address:"Capitol Square, Madison",unitToken:"DM53703H",lat:43.0764,lng:-89.3933},
+    {name:"Mimosa Kitchen",address:"Capitol Square, Madison",unitToken:"DM53703I",lat:43.0749,lng:-89.4034},
+    {name:"Teff Kitchen",address:"Capitol Square, Madison",unitToken:"DM53703J",lat:43.0713,lng:-89.3968}
+  ],
+  "85001": [
+    {name:"Roman Pizza",address:"Downtown Phoenix",unitToken:"DM85001A",lat:33.4412,lng:-112.0719},
+    {name:"New Day Kitchen",address:"Downtown Phoenix",unitToken:"DM85001B",lat:33.4457,lng:-112.0731},
+    {name:"Unity Ethiopian",address:"Downtown Phoenix",unitToken:"DM85001C",lat:33.4444,lng:-112.0684},
+    {name:"Marley Kitchen",address:"Downtown Phoenix",unitToken:"DM85001D",lat:33.4544,lng:-112.0767},
+    {name:"Baklava House",address:"Downtown Phoenix",unitToken:"DM85001E",lat:33.4427,lng:-112.0764},
+    {name:"Cattail Kitchen",address:"Downtown Phoenix",unitToken:"DM85001F",lat:33.451,lng:-112.0799},
+    {name:"Croissant Kitchen",address:"Downtown Phoenix",unitToken:"DM85001G",lat:33.4454,lng:-112.076},
+    {name:"Tora Ramen",address:"Downtown Phoenix",unitToken:"DM85001H",lat:33.4534,lng:-112.0713}
+  ],
+  "85281": [
+    {name:"Wasabi House",address:"Downtown Tempe",unitToken:"DM85281A",lat:33.4335,lng:-111.9334},
+    {name:"Taqueria Azteca",address:"Downtown Tempe",unitToken:"DM85281B",lat:33.4282,lng:-111.9399},
+    {name:"Pane e Vino",address:"Downtown Tempe",unitToken:"DM85281C",lat:33.4224,lng:-111.9328},
+    {name:"Oriental Kitchen",address:"Downtown Tempe",unitToken:"DM85281D",lat:33.4253,lng:-111.9444},
+    {name:"Royal Thai",address:"Downtown Tempe",unitToken:"DM85281E",lat:33.4187,lng:-111.9345},
+    {name:"Que Huong",address:"Downtown Tempe",unitToken:"DM85281F",lat:33.4298,lng:-111.9346},
+    {name:"Saffron Indian",address:"Downtown Tempe",unitToken:"DM85281G",lat:33.4181,lng:-111.9426},
+    {name:"Santorini Kitchen",address:"Downtown Tempe",unitToken:"DM85281H",lat:33.4196,lng:-111.942},
+    {name:"Udon & Bibim",address:"Downtown Tempe",unitToken:"DM85281I",lat:33.4308,lng:-111.9357}
+  ],
+  "85701": [
+    {name:"Tabouleh House",address:"Downtown Tucson",unitToken:"DM85701A",lat:32.2261,lng:-110.982},
+    {name:"Bulgogi Brothers",address:"Downtown Tucson",unitToken:"DM85701B",lat:32.2261,lng:-110.9672},
+    {name:"The Hungry Fox",address:"Downtown Tucson",unitToken:"DM85701C",lat:32.2266,lng:-110.9702},
+    {name:"Pioneer Kitchen",address:"Downtown Tucson",unitToken:"DM85701D",lat:32.2184,lng:-110.9673},
+    {name:"Java Junction",address:"Downtown Tucson",unitToken:"DM85701E",lat:32.2291,lng:-110.9796},
+    {name:"Danish House",address:"Downtown Tucson",unitToken:"DM85701F",lat:32.2304,lng:-110.9753},
+    {name:"Quick Kitchen",address:"Downtown Tucson",unitToken:"DM85701G",lat:32.2226,lng:-110.976},
+    {name:"Quahog Kitchen",address:"Downtown Tucson",unitToken:"DM85701H",lat:32.2274,lng:-110.9805},
+    {name:"Rib Shack",address:"Downtown Tucson",unitToken:"DM85701I",lat:32.2249,lng:-110.9687},
+    {name:"Sal's Pizza",address:"Downtown Tucson",unitToken:"DM85701J",lat:32.226,lng:-110.9744}
+  ],
+  "87101": [
+    {name:"Reef Kitchen",address:"Downtown Albuquerque",unitToken:"DM87101A",lat:35.0777,lng:-106.6558},
+    {name:"Smoky Bones",address:"Downtown Albuquerque",unitToken:"DM87101B",lat:35.0788,lng:-106.6514},
+    {name:"Tony's Slice",address:"Downtown Albuquerque",unitToken:"DM87101C",lat:35.0895,lng:-106.6442},
+    {name:"Omelette House",address:"Downtown Albuquerque",unitToken:"DM87101D",lat:35.0773,lng:-106.6504},
+    {name:"Wot Kitchen",address:"Downtown Albuquerque",unitToken:"DM87101E",lat:35.0923,lng:-106.6524},
+    {name:"Nassau Kitchen",address:"Downtown Albuquerque",unitToken:"DM87101F",lat:35.0913,lng:-106.645},
+    {name:"Couscous Kitchen",address:"Downtown Albuquerque",unitToken:"DM87101G",lat:35.0891,lng:-106.6562},
+    {name:"Delta Kitchen",address:"Downtown Albuquerque",unitToken:"DM87101H",lat:35.0875,lng:-106.6562}
+  ],
+  "79901": [
+    {name:"Evergreen Kitchen",address:"Downtown El Paso",unitToken:"DM79901A",lat:31.7611,lng:-106.4929},
+    {name:"Dijon Kitchen",address:"Downtown El Paso",unitToken:"DM79901B",lat:31.758,lng:-106.4796},
+    {name:"Katsu Kitchen",address:"Downtown El Paso",unitToken:"DM79901C",lat:31.7636,lng:-106.4862},
+    {name:"Casa Bonita",address:"Downtown El Paso",unitToken:"DM79901D",lat:31.7577,lng:-106.4911},
+    {name:"Quattro Stagioni",address:"Downtown El Paso",unitToken:"DM79901E",lat:31.7641,lng:-106.483},
+    {name:"Phoenix Garden",address:"Downtown El Paso",unitToken:"DM79901F",lat:31.7673,lng:-106.485},
+    {name:"Spice Thai",address:"Downtown El Paso",unitToken:"DM79901G",lat:31.764,lng:-106.4838},
+    {name:"Saigon Noodle",address:"Downtown El Paso",unitToken:"DM79901H",lat:31.7586,lng:-106.493},
+    {name:"Taj Kitchen",address:"Downtown El Paso",unitToken:"DM79901I",lat:31.763,lng:-106.49}
+  ],
+  "73301": [
+    {name:"Pho Tai",address:"Downtown Austin",unitToken:"DM73301A",lat:30.2676,lng:-97.7453},
+    {name:"Udupi Palace",address:"Downtown Austin",unitToken:"DM73301B",lat:30.2673,lng:-97.7353},
+    {name:"Urfa Kitchen",address:"Downtown Austin",unitToken:"DM73301C",lat:30.2654,lng:-97.7436},
+    {name:"Dakgalbi House",address:"Downtown Austin",unitToken:"DM73301D",lat:30.2749,lng:-97.747},
+    {name:"Ink & Ember",address:"Downtown Austin",unitToken:"DM73301E",lat:30.2718,lng:-97.7456},
+    {name:"The Quarter",address:"Downtown Austin",unitToken:"DM73301F",lat:30.2693,lng:-97.7388},
+    {name:"Kaldi's Coffee",address:"Downtown Austin",unitToken:"DM73301G",lat:30.2645,lng:-97.7504},
+    {name:"Eclair Bakery",address:"Downtown Austin",unitToken:"DM73301H",lat:30.2722,lng:-97.7483},
+    {name:"Rush Kitchen",address:"Downtown Austin",unitToken:"DM73301I",lat:30.2666,lng:-97.74},
+    {name:"Saltwater Kitchen",address:"Downtown Austin",unitToken:"DM73301J",lat:30.2722,lng:-97.7501}
+  ],
+  "78205": [
+    {name:"Fondant & Frosting",address:"Downtown San Antonio",unitToken:"DM78205A",lat:29.4167,lng:-98.4984},
+    {name:"Snap Kitchen",address:"Downtown San Antonio",unitToken:"DM78205B",lat:29.4303,lng:-98.4966},
+    {name:"Tidal Kitchen",address:"Downtown San Antonio",unitToken:"DM78205C",lat:29.4225,lng:-98.4886},
+    {name:"Texas Smoke",address:"Downtown San Antonio",unitToken:"DM78205D",lat:29.4167,lng:-98.4912},
+    {name:"Upper Crust",address:"Downtown San Antonio",unitToken:"DM78205E",lat:29.4299,lng:-98.5008},
+    {name:"Pancake House",address:"Downtown San Antonio",unitToken:"DM78205F",lat:29.4205,lng:-98.4888},
+    {name:"Yod Kitchen",address:"Downtown San Antonio",unitToken:"DM78205G",lat:29.428,lng:-98.4873},
+    {name:"Ocho Rios Kitchen",address:"Downtown San Antonio",unitToken:"DM78205H",lat:29.4317,lng:-98.4937}
+  ],
+  "75201": [
+    {name:"Port Royal Kitchen",address:"Downtown Dallas",unitToken:"DM75201A",lat:32.794,lng:-96.7982},
+    {name:"Dolma Kitchen",address:"Downtown Dallas",unitToken:"DM75201B",lat:32.7908,lng:-96.8052},
+    {name:"Firefly Kitchen",address:"Downtown Dallas",unitToken:"DM75201C",lat:32.7879,lng:-96.8014},
+    {name:"Escargot House",address:"Downtown Dallas",unitToken:"DM75201D",lat:32.7898,lng:-96.8016},
+    {name:"Aoi Sushi",address:"Downtown Dallas",unitToken:"DM75201E",lat:32.786,lng:-96.7955},
+    {name:"El Patron",address:"Downtown Dallas",unitToken:"DM75201F",lat:32.7799,lng:-96.7926},
+    {name:"Rustico",address:"Downtown Dallas",unitToken:"DM75201G",lat:32.7952,lng:-96.8021},
+    {name:"Red Lantern",address:"Downtown Dallas",unitToken:"DM75201H",lat:32.7804,lng:-96.7963},
+    {name:"Thai Temple",address:"Downtown Dallas",unitToken:"DM75201I",lat:32.792,lng:-96.7956}
+  ],
+  "77002": [
+    {name:"Shanghai Express",address:"Downtown Houston",unitToken:"DM77002A",lat:29.76,lng:-95.36},
+    {name:"Thai Basil Garden",address:"Downtown Houston",unitToken:"DM77002B",lat:29.7484,lng:-95.367},
+    {name:"Viet Kitchen",address:"Downtown Houston",unitToken:"DM77002C",lat:29.7522,lng:-95.3556},
+    {name:"Vindaloo House",address:"Downtown Houston",unitToken:"DM77002D",lat:29.7489,lng:-95.3636},
+    {name:"Vine Leaf Kitchen",address:"Downtown Houston",unitToken:"DM77002E",lat:29.7535,lng:-95.3696},
+    {name:"Galbi Kitchen",address:"Downtown Houston",unitToken:"DM77002F",lat:29.7523,lng:-95.3658},
+    {name:"The Jade Rabbit",address:"Downtown Houston",unitToken:"DM77002G",lat:29.7618,lng:-95.3704},
+    {name:"Red Barn Kitchen",address:"Downtown Houston",unitToken:"DM77002H",lat:29.7547,lng:-95.3562},
+    {name:"Latte Art Cafe",address:"Downtown Houston",unitToken:"DM77002I",lat:29.7588,lng:-95.3595},
+    {name:"Glaze Bakery",address:"Downtown Houston",unitToken:"DM77002J",lat:29.751,lng:-95.3561}
+  ],
+  "77019": [
+    {name:"Sunnyside Diner",address:"Montrose, Houston",unitToken:"DM77019A",lat:29.7445,lng:-95.3918},
+    {name:"Mocha House",address:"Montrose, Houston",unitToken:"DM77019B",lat:29.7569,lng:-95.3983},
+    {name:"Honey Wheat Bakery",address:"Montrose, Houston",unitToken:"DM77019C",lat:29.758,lng:-95.3896},
+    {name:"The Fast Lane",address:"Montrose, Houston",unitToken:"DM77019D",lat:29.7539,lng:-95.3966},
+    {name:"Undertow Kitchen",address:"Montrose, Houston",unitToken:"DM77019E",lat:29.7561,lng:-95.394},
+    {name:"Up in Smoke",address:"Montrose, Houston",unitToken:"DM77019F",lat:29.7527,lng:-95.3927},
+    {name:"Via Pizza",address:"Montrose, Houston",unitToken:"DM77019G",lat:29.7444,lng:-95.4022},
+    {name:"Quiche & Coffee",address:"Montrose, Houston",unitToken:"DM77019H",lat:29.7551,lng:-95.405}
+  ],
+  "76102": [
+    {name:"Rise & Shine",address:"Downtown Fort Worth",unitToken:"DM76102A",lat:32.7534,lng:-97.3259},
+    {name:"Zion Kitchen",address:"Downtown Fort Worth",unitToken:"DM76102B",lat:32.7573,lng:-97.3374},
+    {name:"Rasta Kitchen",address:"Downtown Fort Worth",unitToken:"DM76102C",lat:32.7635,lng:-97.3273},
+    {name:"Esfahan Kitchen",address:"Downtown Fort Worth",unitToken:"DM76102D",lat:32.7598,lng:-97.3256},
+    {name:"Goober Kitchen",address:"Downtown Fort Worth",unitToken:"DM76102E",lat:32.7631,lng:-97.3285},
+    {name:"Fromage Kitchen",address:"Downtown Fort Worth",unitToken:"DM76102F",lat:32.7584,lng:-97.3333},
+    {name:"Hikari Ramen",address:"Downtown Fort Worth",unitToken:"DM76102G",lat:32.7577,lng:-97.3359},
+    {name:"La Hacienda",address:"Downtown Fort Worth",unitToken:"DM76102H",lat:32.7555,lng:-97.3249},
+    {name:"Sapori d'Italia",address:"Downtown Fort Worth",unitToken:"DM76102I",lat:32.7558,lng:-97.3339}
+  ],
+  "73102": [
+    {name:"Taqueria Jalisco",address:"Downtown Oklahoma City",unitToken:"DM73102A",lat:35.4746,lng:-97.5208},
+    {name:"Tavola Calda",address:"Downtown Oklahoma City",unitToken:"DM73102B",lat:35.4731,lng:-97.5204},
+    {name:"Tiger Lily",address:"Downtown Oklahoma City",unitToken:"DM73102C",lat:35.464,lng:-97.5144},
+    {name:"Galangal Kitchen",address:"Downtown Oklahoma City",unitToken:"DM73102D",lat:35.4611,lng:-97.5141},
+    {name:"Xoi Kitchen",address:"Downtown Oklahoma City",unitToken:"DM73102E",lat:35.4621,lng:-97.5139},
+    {name:"Wazwan Kitchen",address:"Downtown Oklahoma City",unitToken:"DM73102F",lat:35.465,lng:-97.5096},
+    {name:"Yalla Kitchen",address:"Downtown Oklahoma City",unitToken:"DM73102G",lat:35.4609,lng:-97.5092},
+    {name:"Haemul Kitchen",address:"Downtown Oklahoma City",unitToken:"DM73102H",lat:35.4638,lng:-97.521},
+    {name:"Knife & Fork",address:"Downtown Oklahoma City",unitToken:"DM73102I",lat:35.4695,lng:-97.5239},
+    {name:"The Tavern",address:"Downtown Oklahoma City",unitToken:"DM73102J",lat:35.4683,lng:-97.5141}
+  ],
+  "72201": [
+    {name:"Japchae Kitchen",address:"Downtown Little Rock",unitToken:"DM72201A",lat:34.7424,lng:-92.2847},
+    {name:"The Lemon Tree",address:"Downtown Little Rock",unitToken:"DM72201B",lat:34.7458,lng:-92.2866},
+    {name:"Union Grill",address:"Downtown Little Rock",unitToken:"DM72201C",lat:34.7451,lng:-92.2902},
+    {name:"Ninth Street Espresso",address:"Downtown Little Rock",unitToken:"DM72201D",lat:34.7408,lng:-92.2838},
+    {name:"Icing on Top",address:"Downtown Little Rock",unitToken:"DM72201E",lat:34.7543,lng:-92.2921},
+    {name:"Urban Plate",address:"Downtown Little Rock",unitToken:"DM72201F",lat:34.7507,lng:-92.2894},
+    {name:"Vessel Kitchen",address:"Downtown Little Rock",unitToken:"DM72201G",lat:34.7424,lng:-92.2956},
+    {name:"Vinegar & Smoke",address:"Downtown Little Rock",unitToken:"DM72201H",lat:34.7408,lng:-92.2968}
+  ],
+  "89101": [
+    {name:"Wood Fire BBQ",address:"Downtown Las Vegas",unitToken:"DM89101A",lat:36.1686,lng:-115.1324},
+    {name:"Wood Fired Pizza",address:"Downtown Las Vegas",unitToken:"DM89101B",lat:36.1749,lng:-115.1329},
+    {name:"Scramble Kitchen",address:"Downtown Las Vegas",unitToken:"DM89101C",lat:36.1649,lng:-115.1453},
+    {name:"Abeba Kitchen",address:"Downtown Las Vegas",unitToken:"DM89101D",lat:36.1699,lng:-115.1429},
+    {name:"Spice Island",address:"Downtown Las Vegas",unitToken:"DM89101E",lat:36.177,lng:-115.1397},
+    {name:"Fattoush House",address:"Downtown Las Vegas",unitToken:"DM89101F",lat:36.1712,lng:-115.147},
+    {name:"Heirloom Kitchen",address:"Downtown Las Vegas",unitToken:"DM89101G",lat:36.1715,lng:-115.1343},
+    {name:"Gratin Kitchen",address:"Downtown Las Vegas",unitToken:"DM89101H",lat:36.1665,lng:-115.1477},
+    {name:"Kumo Japanese",address:"Downtown Las Vegas",unitToken:"DM89101I",lat:36.164,lng:-115.1436}
+  ],
+  "89501": [
+    {name:"Haute Kitchen",address:"Downtown Reno",unitToken:"DM89501A",lat:39.5281,lng:-119.8211},
+    {name:"Sora Sushi",address:"Downtown Reno",unitToken:"DM89501B",lat:39.5306,lng:-119.816},
+    {name:"Casa Oaxaca",address:"Downtown Reno",unitToken:"DM89501C",lat:39.5278,lng:-119.8146},
+    {name:"Via Roma",address:"Downtown Reno",unitToken:"DM89501D",lat:39.5348,lng:-119.8118},
+    {name:"Uncle Chen's",address:"Downtown Reno",unitToken:"DM89501E",lat:39.5237,lng:-119.8203},
+    {name:"Thai Chili",address:"Downtown Reno",unitToken:"DM89501F",lat:39.5305,lng:-119.816},
+    {name:"Pho Dac Biet",address:"Downtown Reno",unitToken:"DM89501G",lat:39.5312,lng:-119.8154},
+    {name:"Biryani House",address:"Downtown Reno",unitToken:"DM89501H",lat:39.5222,lng:-119.8104},
+    {name:"Zaatar Kitchen",address:"Downtown Reno",unitToken:"DM89501I",lat:39.5299,lng:-119.8194},
+    {name:"Kongnamul Kitchen",address:"Downtown Reno",unitToken:"DM89501J",lat:39.5238,lng:-119.8069}
+  ],
+  "90012": [
+    {name:"Chai Pani",address:"Downtown Los Angeles",unitToken:"DM90012A",lat:34.0605,lng:-118.2418},
+    {name:"Athens Kitchen",address:"Downtown Los Angeles",unitToken:"DM90012B",lat:34.0637,lng:-118.2436},
+    {name:"Mandu House",address:"Downtown Los Angeles",unitToken:"DM90012C",lat:34.062,lng:-118.2427},
+    {name:"Milk & Honey",address:"Downtown Los Angeles",unitToken:"DM90012D",lat:34.0601,lng:-118.2409},
+    {name:"Village Kitchen",address:"Downtown Los Angeles",unitToken:"DM90012E",lat:34.0591,lng:-118.2373},
+    {name:"Origin Coffee",address:"Downtown Los Angeles",unitToken:"DM90012F",lat:34.0643,lng:-118.2421},
+    {name:"Jam & Bread",address:"Downtown Los Angeles",unitToken:"DM90012G",lat:34.0667,lng:-118.2393},
+    {name:"Veggie Grill",address:"Downtown Los Angeles",unitToken:"DM90012H",lat:34.0657,lng:-118.2424}
+  ],
+  "90028": [
+    {name:"Whole Kitchen",address:"Hollywood, Los Angeles",unitToken:"DM90028A",lat:34.1037,lng:-118.3248},
+    {name:"Wharf Kitchen",address:"Hollywood, Los Angeles",unitToken:"DM90028B",lat:34.096,lng:-118.3238},
+    {name:"Yard Bird BBQ",address:"Hollywood, Los Angeles",unitToken:"DM90028C",lat:34.1088,lng:-118.3329},
+    {name:"Za Kitchen",address:"Hollywood, Los Angeles",unitToken:"DM90028D",lat:34.0986,lng:-118.3323},
+    {name:"Toast & Jam",address:"Hollywood, Los Angeles",unitToken:"DM90028E",lat:34.1002,lng:-118.3223},
+    {name:"Buna Kitchen",address:"Hollywood, Los Angeles",unitToken:"DM90028F",lat:34.1076,lng:-118.3229},
+    {name:"Trinidad Kitchen",address:"Hollywood, Los Angeles",unitToken:"DM90028G",lat:34.0958,lng:-118.3314},
+    {name:"Grill & Kebab",address:"Hollywood, Los Angeles",unitToken:"DM90028H",lat:34.1013,lng:-118.3287},
+    {name:"Indigo Kitchen",address:"Hollywood, Los Angeles",unitToken:"DM90028I",lat:34.1082,lng:-118.3292}
+  ],
+  "90401": [
+    {name:"Hookah Kitchen",address:"Downtown Santa Monica",unitToken:"DM90401A",lat:34.0239,lng:-118.4877},
+    {name:"Jasmine Kitchen South",address:"Downtown Santa Monica",unitToken:"DM90401B",lat:34.0157,lng:-118.4915},
+    {name:"Ile de France",address:"Downtown Santa Monica",unitToken:"DM90401C",lat:34.0204,lng:-118.4956},
+    {name:"Tsuki Ramen",address:"Downtown Santa Monica",unitToken:"DM90401D",lat:34.0161,lng:-118.4959},
+    {name:"El Mariachi",address:"Downtown Santa Monica",unitToken:"DM90401E",lat:34.0166,lng:-118.4936},
+    {name:"Zio's Kitchen",address:"Downtown Santa Monica",unitToken:"DM90401F",lat:34.0159,lng:-118.4973},
+    {name:"Wonton House",address:"Downtown Santa Monica",unitToken:"DM90401G",lat:34.0176,lng:-118.4835},
+    {name:"Phuket Kitchen",address:"Downtown Santa Monica",unitToken:"DM90401H",lat:34.0268,lng:-118.4863},
+    {name:"Saigon Bistro",address:"Downtown Santa Monica",unitToken:"DM90401I",lat:34.0161,lng:-118.4878},
+    {name:"Dosa Kitchen",address:"Downtown Santa Monica",unitToken:"DM90401J",lat:34.022,lng:-118.4872}
+  ],
+  "90210": [
+    {name:"Sukhothai",address:"Beverly Hills",unitToken:"DM90210A",lat:34.0953,lng:-118.4102},
+    {name:"Pho 75",address:"Beverly Hills",unitToken:"DM90210B",lat:34.0864,lng:-118.4128},
+    {name:"Everest Kitchen",address:"Beverly Hills",unitToken:"DM90210C",lat:34.0859,lng:-118.4137},
+    {name:"Beirut Kitchen",address:"Beverly Hills",unitToken:"DM90210D",lat:34.0857,lng:-118.4108},
+    {name:"Naengmyeon House",address:"Beverly Hills",unitToken:"DM90210E",lat:34.0874,lng:-118.4069},
+    {name:"The Noble Rot",address:"Beverly Hills",unitToken:"DM90210F",lat:34.0843,lng:-118.3991},
+    {name:"Westside Grill",address:"Beverly Hills",unitToken:"DM90210G",lat:34.0925,lng:-118.4004},
+    {name:"Pour Over Cafe",address:"Beverly Hills",unitToken:"DM90210H",lat:34.0925,lng:-118.4024}
+  ],
+  "92101": [
+    {name:"Quiet Cup",address:"Downtown San Diego",unitToken:"DM92101A",lat:32.7163,lng:-117.1699},
+    {name:"Kouign-Amann House",address:"Downtown San Diego",unitToken:"DM92101B",lat:32.7221,lng:-117.1671},
+    {name:"Xtra Fresh",address:"Downtown San Diego",unitToken:"DM92101C",lat:32.7253,lng:-117.1702},
+    {name:"Captain's Table",address:"Downtown San Diego",unitToken:"DM92101D",lat:32.7184,lng:-117.1574},
+    {name:"Ash & Ember BBQ",address:"Downtown San Diego",unitToken:"DM92101E",lat:32.7277,lng:-117.1644},
+    {name:"Artisan Pizza Co",address:"Downtown San Diego",unitToken:"DM92101F",lat:32.7267,lng:-117.1554},
+    {name:"Up & At 'Em",address:"Downtown San Diego",unitToken:"DM92101G",lat:32.7257,lng:-117.1707},
+    {name:"Doro Kitchen",address:"Downtown San Diego",unitToken:"DM92101H",lat:32.7134,lng:-117.1551},
+    {name:"Umi Kitchen",address:"Downtown San Diego",unitToken:"DM92101I",lat:32.7275,lng:-117.1621}
+  ],
+  "92612": [
+    {name:"Dojo Ramen",address:"Irvine, CA",unitToken:"DM92612A",lat:33.6902,lng:-117.827},
+    {name:"La Estrella",address:"Irvine, CA",unitToken:"DM92612B",lat:33.6819,lng:-117.8228},
+    {name:"Basilico",address:"Irvine, CA",unitToken:"DM92612C",lat:33.6881,lng:-117.8343},
+    {name:"Xian Kitchen",address:"Irvine, CA",unitToken:"DM92612D",lat:33.6857,lng:-117.8224},
+    {name:"Tom Yum House",address:"Irvine, CA",unitToken:"DM92612E",lat:33.6903,lng:-117.8201},
+    {name:"Banh Cuon House",address:"Irvine, CA",unitToken:"DM92612F",lat:33.6848,lng:-117.8331},
+    {name:"Flavors of India",address:"Irvine, CA",unitToken:"DM92612G",lat:33.6796,lng:-117.8323},
+    {name:"Crete Kitchen",address:"Irvine, CA",unitToken:"DM92612H",lat:33.6767,lng:-117.8284},
+    {name:"Odeng Kitchen",address:"Irvine, CA",unitToken:"DM92612I",lat:33.6809,lng:-117.8292},
+    {name:"Oak & Rye",address:"Irvine, CA",unitToken:"DM92612J",lat:33.6858,lng:-117.8303}
+  ],
+  "94102": [
+    {name:"Capri Ristorante",address:"Civic Center, San Francisco",unitToken:"DM94102A",lat:37.7751,lng:-122.4166},
+    {name:"Yangtze River",address:"Civic Center, San Francisco",unitToken:"DM94102B",lat:37.7739,lng:-122.4163},
+    {name:"Thai Smile",address:"Civic Center, San Francisco",unitToken:"DM94102C",lat:37.7836,lng:-122.4163},
+    {name:"Ca Phe Kitchen",address:"Civic Center, San Francisco",unitToken:"DM94102D",lat:37.7772,lng:-122.4238},
+    {name:"Garam Masala",address:"Civic Center, San Francisco",unitToken:"DM94102E",lat:37.7738,lng:-122.4153},
+    {name:"Damascus Kitchen",address:"Civic Center, San Francisco",unitToken:"DM94102F",lat:37.778,lng:-122.4185},
+    {name:"Patbingsu House",address:"Civic Center, San Francisco",unitToken:"DM94102G",lat:37.7799,lng:-122.4167},
+    {name:"The Pickled Beet",address:"Civic Center, San Francisco",unitToken:"DM94102H",lat:37.7753,lng:-122.4152}
+  ],
+  "94110": [
+    {name:"Quill & Cleaver",address:"Mission District, San Francisco",unitToken:"DM94110A",lat:37.7489,lng:-122.4179},
+    {name:"Yankee Kitchen",address:"Mission District, San Francisco",unitToken:"DM94110B",lat:37.7552,lng:-122.4246},
+    {name:"Roast & Co",address:"Mission District, San Francisco",unitToken:"DM94110C",lat:37.7549,lng:-122.4232},
+    {name:"Levain Bakery",address:"Mission District, San Francisco",unitToken:"DM94110D",lat:37.7431,lng:-122.4127},
+    {name:"Yum Bowl",address:"Mission District, San Francisco",unitToken:"DM94110E",lat:37.7514,lng:-122.4149},
+    {name:"Deep Blue Kitchen",address:"Mission District, San Francisco",unitToken:"DM94110F",lat:37.7549,lng:-122.4193},
+    {name:"Brisket House",address:"Mission District, San Francisco",unitToken:"DM94110G",lat:37.7426,lng:-122.4198},
+    {name:"Big Cheese Pizza",address:"Mission District, San Francisco",unitToken:"DM94110H",lat:37.7494,lng:-122.4156},
+    {name:"Waffle House Express",address:"Mission District, San Francisco",unitToken:"DM94110I",lat:37.7408,lng:-122.4223}
+  ],
+  "94612": [
+    {name:"Coal Fire Pizza",address:"Downtown Oakland",unitToken:"DM94612A",lat:37.7999,lng:-122.278},
+    {name:"Yolk Kitchen",address:"Downtown Oakland",unitToken:"DM94612B",lat:37.8076,lng:-122.2705},
+    {name:"Kirin Sushi",address:"Downtown Oakland",unitToken:"DM94612C",lat:37.8122,lng:-122.2716},
+    {name:"Taqueria Guadalajara",address:"Downtown Oakland",unitToken:"DM94612D",lat:37.7993,lng:-122.277},
+    {name:"Dolce Forno",address:"Downtown Oakland",unitToken:"DM94612E",lat:37.8067,lng:-122.2725},
+    {name:"Zen Garden",address:"Downtown Oakland",unitToken:"DM94612F",lat:37.8036,lng:-122.2645},
+    {name:"Kra Pao Kitchen",address:"Downtown Oakland",unitToken:"DM94612G",lat:37.7977,lng:-122.2638},
+    {name:"Dau Hu Kitchen",address:"Downtown Oakland",unitToken:"DM94612H",lat:37.7985,lng:-122.2654},
+    {name:"Hyderabad House",address:"Downtown Oakland",unitToken:"DM94612I",lat:37.8123,lng:-122.2729},
+    {name:"Elysian Kitchen",address:"Downtown Oakland",unitToken:"DM94612J",lat:37.8121,lng:-122.2658}
+  ],
+  "94301": [
+    {name:"Midori Japanese",address:"Downtown Palo Alto",unitToken:"DM94301A",lat:37.4496,lng:-122.1436},
+    {name:"Casa Puebla",address:"Downtown Palo Alto",unitToken:"DM94301B",lat:37.4407,lng:-122.1449},
+    {name:"Enoteca",address:"Downtown Palo Alto",unitToken:"DM94301C",lat:37.4413,lng:-122.1485},
+    {name:"Bamboo Garden",address:"Downtown Palo Alto",unitToken:"DM94301D",lat:37.4461,lng:-122.1505},
+    {name:"Som Tum Kitchen",address:"Downtown Palo Alto",unitToken:"DM94301E",lat:37.4437,lng:-122.136},
+    {name:"Pho Ga House",address:"Downtown Palo Alto",unitToken:"DM94301F",lat:37.4378,lng:-122.1499},
+    {name:"Indo Kitchen",address:"Downtown Palo Alto",unitToken:"DM94301G",lat:37.441,lng:-122.1402},
+    {name:"Fig & Olive",address:"Downtown Palo Alto",unitToken:"DM94301H",lat:37.4378,lng:-122.1503}
+  ],
+  "95112": [
+    {name:"Galilee Kitchen",address:"Japantown, San Jose",unitToken:"DM95112A",lat:37.3502,lng:-121.8827},
+    {name:"Sundubu House",address:"Japantown, San Jose",unitToken:"DM95112B",lat:37.3438,lng:-121.8789},
+    {name:"The Roasted Fig",address:"Japantown, San Jose",unitToken:"DM95112C",lat:37.3508,lng:-121.8856},
+    {name:"All-American Diner",address:"Japantown, San Jose",unitToken:"DM95112D",lat:37.3547,lng:-121.891},
+    {name:"Steam Coffee",address:"Japantown, San Jose",unitToken:"DM95112E",lat:37.3574,lng:-121.8865},
+    {name:"Muffin Top",address:"Japantown, San Jose",unitToken:"DM95112F",lat:37.346,lng:-121.8859},
+    {name:"Zen Bowl",address:"Japantown, San Jose",unitToken:"DM95112G",lat:37.3562,lng:-121.8848},
+    {name:"Fin & Shell",address:"Japantown, San Jose",unitToken:"DM95112H",lat:37.3495,lng:-121.8792},
+    {name:"Charcoal Kitchen",address:"Japantown, San Jose",unitToken:"DM95112I",lat:37.3477,lng:-121.8864}
+  ],
+  "97201": [
+    {name:"Grouper Kitchen",address:"Southwest Portland",unitToken:"DM97201A",lat:45.5137,lng:-122.6816},
+    {name:"Drip BBQ",address:"Southwest Portland",unitToken:"DM97201B",lat:45.5158,lng:-122.6825},
+    {name:"Detroit Style Pizza",address:"Southwest Portland",unitToken:"DM97201C",lat:45.5209,lng:-122.6841},
+    {name:"Brunch & Munch",address:"Southwest Portland",unitToken:"DM97201D",lat:45.5162,lng:-122.6709},
+    {name:"Sumo Ramen",address:"Southwest Portland",unitToken:"DM97201E",lat:45.5093,lng:-122.6825},
+    {name:"El Dorado Cantina",address:"Southwest Portland",unitToken:"DM97201F",lat:45.5175,lng:-122.6716},
+    {name:"Fiorentina",address:"Southwest Portland",unitToken:"DM97201G",lat:45.5087,lng:-122.6748},
+    {name:"China Star",address:"Southwest Portland",unitToken:"DM97201H",lat:45.5115,lng:-122.6756},
+    {name:"Thai Elephant",address:"Southwest Portland",unitToken:"DM97201I",lat:45.5212,lng:-122.6834},
+    {name:"Gao Kitchen",address:"Southwest Portland",unitToken:"DM97201J",lat:45.5188,lng:-122.6775}
+  ],
+  "97214": [
+    {name:"Akira Sushi",address:"Southeast Portland",unitToken:"DM97214A",lat:45.5181,lng:-122.6459},
+    {name:"La Fiesta",address:"Southeast Portland",unitToken:"DM97214B",lat:45.5076,lng:-122.6482},
+    {name:"Grappa",address:"Southeast Portland",unitToken:"DM97214C",lat:45.5162,lng:-122.6391},
+    {name:"Double Happiness",address:"Southeast Portland",unitToken:"DM97214D",lat:45.5153,lng:-122.6399},
+    {name:"Curry Leaf Thai",address:"Southeast Portland",unitToken:"DM97214E",lat:45.513,lng:-122.6388},
+    {name:"Hu Tieu House",address:"Southeast Portland",unitToken:"DM97214F",lat:45.5127,lng:-122.6455},
+    {name:"Jodhpur Kitchen",address:"Southeast Portland",unitToken:"DM97214G",lat:45.5124,lng:-122.6432},
+    {name:"Halloumi House",address:"Southeast Portland",unitToken:"DM97214H",lat:45.5117,lng:-122.6378}
+  ],
+  "98101": [
+    {name:"Pho Bo House",address:"Downtown Seattle",unitToken:"DM98101A",lat:47.6041,lng:-122.3335},
+    {name:"Kebab House",address:"Downtown Seattle",unitToken:"DM98101B",lat:47.6101,lng:-122.3398},
+    {name:"Izmir Kitchen",address:"Downtown Seattle",unitToken:"DM98101C",lat:47.6075,lng:-122.3334},
+    {name:"Tangsuyuk House",address:"Downtown Seattle",unitToken:"DM98101D",lat:47.6035,lng:-122.334},
+    {name:"Stone & Skillet",address:"Downtown Seattle",unitToken:"DM98101E",lat:47.6062,lng:-122.3296},
+    {name:"Buck's Grill",address:"Downtown Seattle",unitToken:"DM98101F",lat:47.6023,lng:-122.327},
+    {name:"Third Wave Coffee",address:"Downtown Seattle",unitToken:"DM98101G",lat:47.61,lng:-122.3327},
+    {name:"Nutmeg Bakery",address:"Downtown Seattle",unitToken:"DM98101H",lat:47.6009,lng:-122.3286},
+    {name:"Acai Bowl Co",address:"Downtown Seattle",unitToken:"DM98101I",lat:47.6129,lng:-122.3314}
+  ],
+  "98103": [
+    {name:"Oat & Honey Bakery",address:"Fremont, Seattle",unitToken:"DM98103A",lat:47.6746,lng:-122.3371},
+    {name:"Build Your Bowl",address:"Fremont, Seattle",unitToken:"DM98103B",lat:47.667,lng:-122.3504},
+    {name:"Halibut House",address:"Fremont, Seattle",unitToken:"DM98103C",lat:47.6699,lng:-122.3392},
+    {name:"Fat Cap BBQ",address:"Fremont, Seattle",unitToken:"DM98103D",lat:47.6743,lng:-122.3445},
+    {name:"Extra Cheese",address:"Fremont, Seattle",unitToken:"DM98103E",lat:47.6769,lng:-122.3406},
+    {name:"Daybreak Kitchen",address:"Fremont, Seattle",unitToken:"DM98103F",lat:47.674,lng:-122.3504},
+    {name:"Roku Sushi",address:"Fremont, Seattle",unitToken:"DM98103G",lat:47.6664,lng:-122.342},
+    {name:"Taqueria Michoacan",address:"Fremont, Seattle",unitToken:"DM98103H",lat:47.6818,lng:-122.3502},
+    {name:"Il Cortile",address:"Fremont, Seattle",unitToken:"DM98103I",lat:47.677,lng:-122.3376},
+    {name:"Eastern Garden",address:"Fremont, Seattle",unitToken:"DM98103J",lat:47.6679,lng:-122.349}
+  ],
+  "98122": [
+    {name:"Hachi Ramen",address:"Capitol Hill, Seattle",unitToken:"DM98122A",lat:47.6094,lng:-122.3205},
+    {name:"Casa Veracruz",address:"Capitol Hill, Seattle",unitToken:"DM98122B",lat:47.6106,lng:-122.3225},
+    {name:"La Pergola",address:"Capitol Hill, Seattle",unitToken:"DM98122C",lat:47.6136,lng:-122.325},
+    {name:"Five Spice Kitchen",address:"Capitol Hill, Seattle",unitToken:"DM98122D",lat:47.6111,lng:-122.3157},
+    {name:"Isaan Kitchen",address:"Capitol Hill, Seattle",unitToken:"DM98122E",lat:47.6222,lng:-122.3185},
+    {name:"Nuoc Mam Kitchen",address:"Capitol Hill, Seattle",unitToken:"DM98122F",lat:47.6128,lng:-122.3229},
+    {name:"Lassi House",address:"Capitol Hill, Seattle",unitToken:"DM98122G",lat:47.6165,lng:-122.3177},
+    {name:"Jaffa Kitchen",address:"Capitol Hill, Seattle",unitToken:"DM98122H",lat:47.6198,lng:-122.3186}
+  ],
+  "80202": [
+    {name:"Golden Wok",address:"LoDo, Denver",unitToken:"DM80202A",lat:39.7606,lng:-104.992},
+    {name:"Thai Pepper",address:"LoDo, Denver",unitToken:"DM80202B",lat:39.7597,lng:-105.0039},
+    {name:"Pho Viet",address:"LoDo, Denver",unitToken:"DM80202C",lat:39.7592,lng:-105.0},
+    {name:"Mughlai Kitchen",address:"LoDo, Denver",unitToken:"DM80202D",lat:39.756,lng:-105.0031},
+    {name:"Kefir Kitchen",address:"LoDo, Denver",unitToken:"DM80202E",lat:39.7555,lng:-105.0047},
+    {name:"Banchan Kitchen",address:"LoDo, Denver",unitToken:"DM80202F",lat:39.7453,lng:-105.0043},
+    {name:"The Twisted Olive",address:"LoDo, Denver",unitToken:"DM80202G",lat:39.7581,lng:-104.9945},
+    {name:"Capitol Grill",address:"LoDo, Denver",unitToken:"DM80202H",lat:39.7476,lng:-105.0038},
+    {name:"Upshot Coffee",address:"LoDo, Denver",unitToken:"DM80202I",lat:39.7558,lng:-104.999}
+  ],
+  "80302": [
+    {name:"Duke's Kitchen",address:"Downtown Boulder",unitToken:"DM80302A",lat:40.0188,lng:-105.2659},
+    {name:"Vibe Coffee",address:"Downtown Boulder",unitToken:"DM80302B",lat:40.0083,lng:-105.2666},
+    {name:"Pretzel House",address:"Downtown Boulder",unitToken:"DM80302C",lat:40.0086,lng:-105.2748},
+    {name:"Calorie Counter",address:"Downtown Boulder",unitToken:"DM80302D",lat:40.0167,lng:-105.2687},
+    {name:"Inlet Kitchen",address:"Downtown Boulder",unitToken:"DM80302E",lat:40.0225,lng:-105.2733},
+    {name:"Grit & Smoke",address:"Downtown Boulder",unitToken:"DM80302F",lat:40.0195,lng:-105.2713},
+    {name:"Flatbread Kitchen",address:"Downtown Boulder",unitToken:"DM80302G",lat:40.0158,lng:-105.2725},
+    {name:"First Light Kitchen",address:"Downtown Boulder",unitToken:"DM80302H",lat:40.0164,lng:-105.2724},
+    {name:"Yuki Sushi",address:"Downtown Boulder",unitToken:"DM80302I",lat:40.0117,lng:-105.2746},
+    {name:"El Agave",address:"Downtown Boulder",unitToken:"DM80302J",lat:40.0113,lng:-105.2724}
+  ],
+  "84101": [
+    {name:"Golden Morning",address:"Downtown Salt Lake City",unitToken:"DM84101A",lat:40.7553,lng:-111.8928},
+    {name:"Ichi Ramen",address:"Downtown Salt Lake City",unitToken:"DM84101B",lat:40.7543,lng:-111.8839},
+    {name:"La Bamba",address:"Downtown Salt Lake City",unitToken:"DM84101C",lat:40.765,lng:-111.8974},
+    {name:"Mangia",address:"Downtown Salt Lake City",unitToken:"DM84101D",lat:40.7597,lng:-111.8901},
+    {name:"Happy Garden",address:"Downtown Salt Lake City",unitToken:"DM84101E",lat:40.7545,lng:-111.8976},
+    {name:"Satay House",address:"Downtown Salt Lake City",unitToken:"DM84101F",lat:40.7624,lng:-111.8864},
+    {name:"Rau Muong Kitchen",address:"Downtown Salt Lake City",unitToken:"DM84101G",lat:40.753,lng:-111.8924},
+    {name:"Nirvana Indian",address:"Downtown Salt Lake City",unitToken:"DM84101H",lat:40.7644,lng:-111.89}
+  ],
+  "83702": [
+    {name:"Taqueria Durango",address:"North End, Boise",unitToken:"DM83702A",lat:43.6153,lng:-116.1993},
+    {name:"Napoli Express",address:"North End, Boise",unitToken:"DM83702B",lat:43.6113,lng:-116.206},
+    {name:"Iron Wok",address:"North End, Boise",unitToken:"DM83702C",lat:43.6097,lng:-116.2059},
+    {name:"Thai Spice Box",address:"North End, Boise",unitToken:"DM83702D",lat:43.6195,lng:-116.2045},
+    {name:"Saigon Street",address:"North End, Boise",unitToken:"DM83702E",lat:43.617,lng:-116.2008},
+    {name:"Opal Kitchen",address:"North End, Boise",unitToken:"DM83702F",lat:43.6087,lng:-116.2054},
+    {name:"Labneh House",address:"North End, Boise",unitToken:"DM83702G",lat:43.6205,lng:-116.2042},
+    {name:"Chimaek House",address:"North End, Boise",unitToken:"DM83702H",lat:43.614,lng:-116.2034},
+    {name:"Umber & Ash",address:"North End, Boise",unitToken:"DM83702I",lat:43.6226,lng:-116.2081}
+  ],
+  "59601": [
+    {name:"Doenjang Kitchen",address:"Downtown Helena",unitToken:"DM59601A",lat:46.5956,lng:-112.0293},
+    {name:"The Violet Hour",address:"Downtown Helena",unitToken:"DM59601B",lat:46.5958,lng:-112.017},
+    {name:"Elm Street Diner",address:"Downtown Helena",unitToken:"DM59601C",lat:46.5915,lng:-112.0246},
+    {name:"Wired Coffee",address:"Downtown Helena",unitToken:"DM59601D",lat:46.5856,lng:-112.028},
+    {name:"Quiche Kitchen",address:"Downtown Helena",unitToken:"DM59601E",lat:46.5862,lng:-112.0176},
+    {name:"Detox Kitchen",address:"Downtown Helena",unitToken:"DM59601F",lat:46.5964,lng:-112.0296},
+    {name:"Jolly Roger Kitchen",address:"Downtown Helena",unitToken:"DM59601G",lat:46.5808,lng:-112.0209},
+    {name:"Hog Wild BBQ",address:"Downtown Helena",unitToken:"DM59601H",lat:46.5874,lng:-112.0278},
+    {name:"Grandma's Pie",address:"Downtown Helena",unitToken:"DM59601I",lat:46.5935,lng:-112.0198},
+    {name:"Huevos Kitchen",address:"Downtown Helena",unitToken:"DM59601J",lat:46.5884,lng:-112.0224}
+  ],
+  "82001": [
+    {name:"Ironbark BBQ",address:"Downtown Cheyenne",unitToken:"DM82001A",lat:41.1425,lng:-104.8168},
+    {name:"Hand Tossed Pizza",address:"Downtown Cheyenne",unitToken:"DM82001B",lat:41.1332,lng:-104.8123},
+    {name:"Instant Brunch",address:"Downtown Cheyenne",unitToken:"DM82001C",lat:41.1384,lng:-104.8201},
+    {name:"Taro Japanese",address:"Downtown Cheyenne",unitToken:"DM82001D",lat:41.1387,lng:-104.8276},
+    {name:"Casa Chihuahua",address:"Downtown Cheyenne",unitToken:"DM82001E",lat:41.1463,lng:-104.8196},
+    {name:"Oliva",address:"Downtown Cheyenne",unitToken:"DM82001F",lat:41.1337,lng:-104.8242},
+    {name:"Joy Kitchen",address:"Downtown Cheyenne",unitToken:"DM82001G",lat:41.1347,lng:-104.8184},
+    {name:"Sticky Rice Thai",address:"Downtown Cheyenne",unitToken:"DM82001H",lat:41.1428,lng:-104.8218}
+  ],
+  "96801": [
+    {name:"Koji Sushi",address:"Downtown Honolulu",unitToken:"DM96801A",lat:21.3144,lng:-157.8594},
+    {name:"El Burro",address:"Downtown Honolulu",unitToken:"DM96801B",lat:21.303,lng:-157.8581},
+    {name:"Piazza Kitchen",address:"Downtown Honolulu",unitToken:"DM96801C",lat:21.3082,lng:-157.8571},
+    {name:"King's Kitchen",address:"Downtown Honolulu",unitToken:"DM96801D",lat:21.3052,lng:-157.8539},
+    {name:"Thai Street Kitchen",address:"Downtown Honolulu",unitToken:"DM96801E",lat:21.3069,lng:-157.8608},
+    {name:"Pho Tay Ho",address:"Downtown Honolulu",unitToken:"DM96801F",lat:21.3006,lng:-157.8596},
+    {name:"Paneer Palace",address:"Downtown Honolulu",unitToken:"DM96801G",lat:21.3122,lng:-157.8546},
+    {name:"Mezze Kitchen",address:"Downtown Honolulu",unitToken:"DM96801H",lat:21.3044,lng:-157.8538},
+    {name:"Eomuk House",address:"Downtown Honolulu",unitToken:"DM96801I",lat:21.3045,lng:-157.8647}
+  ],
+  "99501": [
+    {name:"Qorma Kitchen",address:"Downtown Anchorage",unitToken:"DM99501A",lat:61.2173,lng:-149.9072},
+    {name:"Nazareth Kitchen",address:"Downtown Anchorage",unitToken:"DM99501B",lat:61.2119,lng:-149.8947},
+    {name:"Gochujang Kitchen",address:"Downtown Anchorage",unitToken:"DM99501C",lat:61.2209,lng:-149.9057},
+    {name:"Wren & Thistle",address:"Downtown Anchorage",unitToken:"DM99501D",lat:61.2184,lng:-149.8995},
+    {name:"Firehouse Grill",address:"Downtown Anchorage",unitToken:"DM99501E",lat:61.2169,lng:-149.9009},
+    {name:"Xpresso Cafe",address:"Downtown Anchorage",unitToken:"DM99501F",lat:61.2202,lng:-149.9053},
+    {name:"Rye & Reason",address:"Downtown Anchorage",unitToken:"DM99501G",lat:61.2164,lng:-149.8965},
+    {name:"Energy Kitchen",address:"Downtown Anchorage",unitToken:"DM99501H",lat:61.2173,lng:-149.9014},
+    {name:"Kelp Kitchen",address:"Downtown Anchorage",unitToken:"DM99501I",lat:61.2135,lng:-149.9038},
+    {name:"Jerk & Smoke",address:"Downtown Anchorage",unitToken:"DM99501J",lat:61.2193,lng:-149.8955}
+  ],
+  "95814": [
+    {name:"Fit Kitchen",address:"Downtown Sacramento",unitToken:"DM95814A",lat:38.5795,lng:-121.4992},
+    {name:"Lighthouse Kitchen",address:"Downtown Sacramento",unitToken:"DM95814B",lat:38.5843,lng:-121.4946},
+    {name:"Kindling BBQ",address:"Downtown Sacramento",unitToken:"DM95814C",lat:38.5832,lng:-121.4926},
+    {name:"Iron Pizza",address:"Downtown Sacramento",unitToken:"DM95814D",lat:38.5792,lng:-121.4889},
+    {name:"Juice & Jam",address:"Downtown Sacramento",unitToken:"DM95814E",lat:38.5866,lng:-121.4911},
+    {name:"Nami Ramen",address:"Downtown Sacramento",unitToken:"DM95814F",lat:38.583,lng:-121.4916},
+    {name:"La Cantina",address:"Downtown Sacramento",unitToken:"DM95814G",lat:38.5774,lng:-121.5005},
+    {name:"Ristorante Milano",address:"Downtown Sacramento",unitToken:"DM95814H",lat:38.5759,lng:-121.4962}
+  ],
+  "89109": [
+    {name:"Ryu Sushi",address:"The Strip, Las Vegas",unitToken:"DM89109A",lat:36.1227,lng:-115.1751},
+    {name:"Taqueria Sonora",address:"The Strip, Las Vegas",unitToken:"DM89109B",lat:36.1221,lng:-115.1672},
+    {name:"Sorrento",address:"The Strip, Las Vegas",unitToken:"DM89109C",lat:36.1162,lng:-115.1773},
+    {name:"Lychee House",address:"The Strip, Las Vegas",unitToken:"DM89109D",lat:36.127,lng:-115.172},
+    {name:"Green Curry House",address:"The Strip, Las Vegas",unitToken:"DM89109E",lat:36.1287,lng:-115.1741},
+    {name:"Banh Xeo House",address:"The Strip, Las Vegas",unitToken:"DM89109F",lat:36.1289,lng:-115.1738},
+    {name:"Rajput Kitchen",address:"The Strip, Las Vegas",unitToken:"DM89109G",lat:36.1245,lng:-115.1752},
+    {name:"Ouzo Kitchen",address:"The Strip, Las Vegas",unitToken:"DM89109H",lat:36.1213,lng:-115.1806},
+    {name:"Hobak Kitchen",address:"The Strip, Las Vegas",unitToken:"DM89109I",lat:36.117,lng:-115.1814}
+  ],
+  "33301": [
+    {name:"Thai Mango",address:"Downtown Fort Lauderdale",unitToken:"DM33301A",lat:26.119,lng:-80.1328},
+    {name:"Che Kitchen",address:"Downtown Fort Lauderdale",unitToken:"DM33301B",lat:26.1268,lng:-80.1374},
+    {name:"Samosa House",address:"Downtown Fort Lauderdale",unitToken:"DM33301C",lat:26.1236,lng:-80.141},
+    {name:"Phoenicia Kitchen",address:"Downtown Fort Lauderdale",unitToken:"DM33301D",lat:26.1231,lng:-80.1332},
+    {name:"Injeolmi House",address:"Downtown Fort Lauderdale",unitToken:"DM33301E",lat:26.1215,lng:-80.1418},
+    {name:"The Yellow Door",address:"Downtown Fort Lauderdale",unitToken:"DM33301F",lat:26.1262,lng:-80.1348},
+    {name:"Golden Gate Grill",address:"Downtown Fort Lauderdale",unitToken:"DM33301G",lat:26.1284,lng:-80.1448},
+    {name:"Yawn Coffee",address:"Downtown Fort Lauderdale",unitToken:"DM33301H",lat:26.1282,lng:-80.1439},
+    {name:"Scone House",address:"Downtown Fort Lauderdale",unitToken:"DM33301I",lat:26.1268,lng:-80.1415},
+    {name:"Gusto Kitchen",address:"Downtown Fort Lauderdale",unitToken:"DM33301J",lat:26.1238,lng:-80.1397}
+  ],
+  "02903": [
+    {name:"Zephyr Coffee",address:"Downtown Providence",unitToken:"DM02903A",lat:41.8261,lng:-71.4181},
+    {name:"Tart & Sweet",address:"Downtown Providence",unitToken:"DM02903B",lat:41.829,lng:-71.4079},
+    {name:"Harvest Bowl",address:"Downtown Providence",unitToken:"DM02903C",lat:41.8245,lng:-71.4113},
+    {name:"Mussel House",address:"Downtown Providence",unitToken:"DM02903D",lat:41.8317,lng:-71.4161},
+    {name:"Lump Charcoal",address:"Downtown Providence",unitToken:"DM02903E",lat:41.8312,lng:-71.4126},
+    {name:"Jet's Slice",address:"Downtown Providence",unitToken:"DM02903F",lat:41.829,lng:-71.4186},
+    {name:"Kettle Brunch",address:"Downtown Providence",unitToken:"DM02903G",lat:41.8307,lng:-71.4049},
+    {name:"Kuma Ramen",address:"Downtown Providence",unitToken:"DM02903H",lat:41.818,lng:-71.4069}
+  ],
+  "40202": [
+    {name:"Shin Japanese",address:"Downtown Louisville",unitToken:"DM40202A",lat:38.2561,lng:-85.7532},
+    {name:"Casa Morelos",address:"Downtown Louisville",unitToken:"DM40202B",lat:38.251,lng:-85.7642},
+    {name:"Trevi",address:"Downtown Louisville",unitToken:"DM40202C",lat:38.2547,lng:-85.7605},
+    {name:"Moon Palace",address:"Downtown Louisville",unitToken:"DM40202D",lat:38.2574,lng:-85.7542},
+    {name:"Panang Kitchen",address:"Downtown Louisville",unitToken:"DM40202E",lat:38.2567,lng:-85.7554},
+    {name:"Pho Hung",address:"Downtown Louisville",unitToken:"DM40202F",lat:38.252,lng:-85.7587},
+    {name:"Tikka Kitchen",address:"Downtown Louisville",unitToken:"DM40202G",lat:38.2586,lng:-85.7529},
+    {name:"Quinoa Mediterranean",address:"Downtown Louisville",unitToken:"DM40202H",lat:38.2603,lng:-85.7563},
+    {name:"Jokbal Kitchen",address:"Downtown Louisville",unitToken:"DM40202I",lat:38.2583,lng:-85.7538}
+  ],
+  "38103": [
+    {name:"Umbria",address:"Downtown Memphis",unitToken:"DM38103A",lat:35.157,lng:-90.0438},
+    {name:"Noble House",address:"Downtown Memphis",unitToken:"DM38103B",lat:35.1467,lng:-90.0525},
+    {name:"Thai Silk",address:"Downtown Memphis",unitToken:"DM38103C",lat:35.1436,lng:-90.0434},
+    {name:"Nem Kitchen",address:"Downtown Memphis",unitToken:"DM38103D",lat:35.1558,lng:-90.0448},
+    {name:"Uttapam House",address:"Downtown Memphis",unitToken:"DM38103E",lat:35.1515,lng:-90.0436},
+    {name:"Rhodes Kitchen",address:"Downtown Memphis",unitToken:"DM38103F",lat:35.1564,lng:-90.0545},
+    {name:"Kkakdugi House",address:"Downtown Memphis",unitToken:"DM38103G",lat:35.1574,lng:-90.0502},
+    {name:"Zinc & Ivy",address:"Downtown Memphis",unitToken:"DM38103H",lat:35.1556,lng:-90.0522},
+    {name:"Harbor Kitchen",address:"Downtown Memphis",unitToken:"DM38103I",lat:35.143,lng:-90.0512},
+    {name:"Arabica House",address:"Downtown Memphis",unitToken:"DM38103J",lat:35.1521,lng:-90.0466}
+  ],
+  "23219": [
+    {name:"The Amber Glass",address:"Downtown Richmond",unitToken:"DM23219A",lat:37.5427,lng:-77.4324},
+    {name:"Iron Skillet",address:"Downtown Richmond",unitToken:"DM23219B",lat:37.5396,lng:-77.4425},
+    {name:"Brew Lab",address:"Downtown Richmond",unitToken:"DM23219C",lat:37.5361,lng:-77.4428},
+    {name:"Uprise Bakery",address:"Downtown Richmond",unitToken:"DM23219D",lat:37.541,lng:-77.4369},
+    {name:"Island Bowl",address:"Downtown Richmond",unitToken:"DM23219E",lat:37.5382,lng:-77.4421},
+    {name:"Nautical Kitchen",address:"Downtown Richmond",unitToken:"DM23219F",lat:37.5438,lng:-77.4364},
+    {name:"Mop & Sauce",address:"Downtown Richmond",unitToken:"DM23219G",lat:37.5341,lng:-77.4311},
+    {name:"Knot Pizza",address:"Downtown Richmond",unitToken:"DM23219H",lat:37.5386,lng:-77.4392}
+  ],
+  "23451": [
+    {name:"Little Italy Pizza",address:"Virginia Beach Oceanfront",unitToken:"DM23451A",lat:36.8589,lng:-75.9757},
+    {name:"Lazy Sunday",address:"Virginia Beach Oceanfront",unitToken:"DM23451B",lat:36.846,lng:-75.977},
+    {name:"Maru Sushi",address:"Virginia Beach Oceanfront",unitToken:"DM23451C",lat:36.8475,lng:-75.9804},
+    {name:"El Charro",address:"Virginia Beach Oceanfront",unitToken:"DM23451D",lat:36.8569,lng:-75.9713},
+    {name:"Vesuvio",address:"Virginia Beach Oceanfront",unitToken:"DM23451E",lat:36.852,lng:-75.9825},
+    {name:"Orchid Garden",address:"Virginia Beach Oceanfront",unitToken:"DM23451F",lat:36.8471,lng:-75.984},
+    {name:"Massaman House",address:"Virginia Beach Oceanfront",unitToken:"DM23451G",lat:36.8505,lng:-75.9791},
+    {name:"Oc Kitchen",address:"Virginia Beach Oceanfront",unitToken:"DM23451H",lat:36.8489,lng:-75.9757},
+    {name:"Vada Pav Kitchen",address:"Virginia Beach Oceanfront",unitToken:"DM23451I",lat:36.8545,lng:-75.9745}
+  ],
+  "61801": [
+    {name:"Tomo Ramen",address:"Downtown Champaign",unitToken:"DM61801A",lat:40.1088,lng:-88.2378},
+    {name:"La Fogata",address:"Downtown Champaign",unitToken:"DM61801B",lat:40.1117,lng:-88.2417},
+    {name:"Al Dente",address:"Downtown Champaign",unitToken:"DM61801C",lat:40.1147,lng:-88.2411},
+    {name:"Pearl River",address:"Downtown Champaign",unitToken:"DM61801D",lat:40.1163,lng:-88.2496},
+    {name:"Thai Lanna",address:"Downtown Champaign",unitToken:"DM61801E",lat:40.1179,lng:-88.2429},
+    {name:"Pho Quang",address:"Downtown Champaign",unitToken:"DM61801F",lat:40.1233,lng:-88.2493},
+    {name:"Wok & Tandoor",address:"Downtown Champaign",unitToken:"DM61801G",lat:40.1151,lng:-88.2427},
+    {name:"Shawarma House",address:"Downtown Champaign",unitToken:"DM61801H",lat:40.1159,lng:-88.2356},
+    {name:"Makgeolli House",address:"Downtown Champaign",unitToken:"DM61801I",lat:40.1178,lng:-88.2512},
+    {name:"Birch & Barrel",address:"Downtown Champaign",unitToken:"DM61801J",lat:40.1232,lng:-88.2362}
+  ],
+  "50309": [
+    {name:"Tabbouleh Kitchen",address:"Downtown Des Moines",unitToken:"DM50309A",lat:41.5834,lng:-93.6216},
+    {name:"Nurungji Kitchen",address:"Downtown Des Moines",unitToken:"DM50309B",lat:41.5856,lng:-93.6266},
+    {name:"The Crimson Leaf",address:"Downtown Des Moines",unitToken:"DM50309C",lat:41.5874,lng:-93.6306},
+    {name:"Johnny's Grill",address:"Downtown Des Moines",unitToken:"DM50309D",lat:41.5801,lng:-93.6183},
+    {name:"Cortado Cafe",address:"Downtown Des Moines",unitToken:"DM50309E",lat:41.5874,lng:-93.6267},
+    {name:"Vienna Bakery",address:"Downtown Des Moines",unitToken:"DM50309F",lat:41.5922,lng:-93.6221},
+    {name:"Juice & Java",address:"Downtown Des Moines",unitToken:"DM50309G",lat:41.59,lng:-93.6213},
+    {name:"Oyster House",address:"Downtown Des Moines",unitToken:"DM50309H",lat:41.5797,lng:-93.6316}
+  ],
+  "10011": [
+    {name:"Prawn Kitchen",address:"West Village, Manhattan",unitToken:"DM10011A",lat:40.7411,lng:-73.9985},
+    {name:"Nosh BBQ",address:"West Village, Manhattan",unitToken:"DM10011B",lat:40.7457,lng:-73.9963},
+    {name:"Metro Pizza",address:"West Village, Manhattan",unitToken:"DM10011C",lat:40.7451,lng:-73.997},
+    {name:"Maple Brunch",address:"West Village, Manhattan",unitToken:"DM10011D",lat:40.749,lng:-73.9998},
+    {name:"Hiro Sushi",address:"West Village, Manhattan",unitToken:"DM10011E",lat:40.7379,lng:-74.0023},
+    {name:"Taqueria Sinaloa",address:"West Village, Manhattan",unitToken:"DM10011F",lat:40.7455,lng:-74.0063},
+    {name:"Bruschetta Bar",address:"West Village, Manhattan",unitToken:"DM10011G",lat:40.7392,lng:-74.0013},
+    {name:"Qing Kitchen",address:"West Village, Manhattan",unitToken:"DM10011H",lat:40.738,lng:-73.9926},
+    {name:"Pad See Ew House",address:"West Village, Manhattan",unitToken:"DM10011I",lat:40.7417,lng:-74.0}
+  ],
+  "30303": [
+    {name:"Kai Ramen",address:"Downtown Atlanta",unitToken:"DM30303A",lat:33.7594,lng:-84.3954},
+    {name:"Casa Guerrero",address:"Downtown Atlanta",unitToken:"DM30303B",lat:33.7581,lng:-84.3838},
+    {name:"Carbonara House",address:"Downtown Atlanta",unitToken:"DM30303C",lat:33.7475,lng:-84.3862},
+    {name:"Rice Bowl",address:"Downtown Atlanta",unitToken:"DM30303D",lat:33.7594,lng:-84.3979},
+    {name:"Thai Tamarind",address:"Downtown Atlanta",unitToken:"DM30303E",lat:33.7515,lng:-84.3834},
+    {name:"Rau Kitchen",address:"Downtown Atlanta",unitToken:"DM30303F",lat:33.7545,lng:-84.3835},
+    {name:"Xylo Kitchen",address:"Downtown Atlanta",unitToken:"DM30303G",lat:33.7524,lng:-84.393},
+    {name:"Ummah Kitchen",address:"Downtown Atlanta",unitToken:"DM30303H",lat:33.7508,lng:-84.3849},
+    {name:"Ojingeo House",address:"Downtown Atlanta",unitToken:"DM30303I",lat:33.7476,lng:-84.3873},
+    {name:"Drift & Dine",address:"Downtown Atlanta",unitToken:"DM30303J",lat:33.7493,lng:-84.3898}
+  ],
+  "60607": [
+    {name:"Pho Sunrise",address:"West Loop, Chicago",unitToken:"DM60607A",lat:41.8655,lng:-87.6559},
+    {name:"Yogurt Kitchen",address:"West Loop, Chicago",unitToken:"DM60607B",lat:41.8696,lng:-87.6545},
+    {name:"Valencia Kitchen",address:"West Loop, Chicago",unitToken:"DM60607C",lat:41.8676,lng:-87.6543},
+    {name:"Pyeongyang Kitchen",address:"West Loop, Chicago",unitToken:"DM60607D",lat:41.8744,lng:-87.6559},
+    {name:"The Emerald Table",address:"West Loop, Chicago",unitToken:"DM60607E",lat:41.8804,lng:-87.6509},
+    {name:"Kitchen Sink",address:"West Loop, Chicago",unitToken:"DM60607F",lat:41.8766,lng:-87.6594},
+    {name:"Drip Coffee",address:"West Loop, Chicago",unitToken:"DM60607G",lat:41.8648,lng:-87.6546},
+    {name:"Wheat & Co",address:"West Loop, Chicago",unitToken:"DM60607H",lat:41.8784,lng:-87.6481}
+  ],
+  "78701": [
+    {name:"Yeast Mode",address:"East Austin",unitToken:"DM78701A",lat:30.2754,lng:-97.7388},
+    {name:"Kale Yeah",address:"East Austin",unitToken:"DM78701B",lat:30.2666,lng:-97.7439},
+    {name:"Scallop House",address:"East Austin",unitToken:"DM78701C",lat:30.2728,lng:-97.7514},
+    {name:"Offset Kitchen",address:"East Austin",unitToken:"DM78701D",lat:30.2694,lng:-97.7517},
+    {name:"Neapolitan Kitchen",address:"East Austin",unitToken:"DM78701E",lat:30.2715,lng:-97.7381},
+    {name:"Noon Kitchen",address:"East Austin",unitToken:"DM78701F",lat:30.2663,lng:-97.7509},
+    {name:"Suki Japanese",address:"East Austin",unitToken:"DM78701G",lat:30.278,lng:-97.7512},
+    {name:"El Coyote",address:"East Austin",unitToken:"DM78701H",lat:30.2719,lng:-97.737},
+    {name:"Diavola",address:"East Austin",unitToken:"DM78701I",lat:30.2691,lng:-97.7474}
+  ],
+  "97209": [
+    {name:"Bento Box Express",address:"Pearl District, Portland",unitToken:"DM97209A",lat:45.5342,lng:-122.6798},
+    {name:"La Frontera",address:"Pearl District, Portland",unitToken:"DM97209B",lat:45.5274,lng:-122.6904},
+    {name:"Espresso Roma",address:"Pearl District, Portland",unitToken:"DM97209C",lat:45.5355,lng:-122.6822},
+    {name:"Silk Road Kitchen",address:"Pearl District, Portland",unitToken:"DM97209D",lat:45.5256,lng:-122.6841},
+    {name:"Larb Kitchen",address:"Pearl District, Portland",unitToken:"DM97209E",lat:45.5316,lng:-122.6762},
+    {name:"Thit Nuong House",address:"Pearl District, Portland",unitToken:"DM97209F",lat:45.5279,lng:-122.6874},
+    {name:"Zafrani Kitchen",address:"Pearl District, Portland",unitToken:"DM97209G",lat:45.5255,lng:-122.6806},
+    {name:"Wadi Kitchen",address:"Pearl District, Portland",unitToken:"DM97209H",lat:45.5342,lng:-122.691},
+    {name:"Soju Kitchen",address:"Pearl District, Portland",unitToken:"DM97209I",lat:45.5254,lng:-122.6802},
+    {name:"Flint & Steel",address:"Pearl District, Portland",unitToken:"DM97209J",lat:45.5312,lng:-122.6808}
+  ],
+  "94103": [
+    {name:"Tea Garden",address:"SoMa, San Francisco",unitToken:"DM94103A",lat:37.7651,lng:-122.4114},
+    {name:"Thai Coconut",address:"SoMa, San Francisco",unitToken:"DM94103B",lat:37.7766,lng:-122.4139},
+    {name:"Pho Vang",address:"SoMa, San Francisco",unitToken:"DM94103C",lat:37.7775,lng:-122.4157},
+    {name:"Amritsar Kitchen",address:"SoMa, San Francisco",unitToken:"DM94103D",lat:37.7779,lng:-122.4022},
+    {name:"Xenios Kitchen",address:"SoMa, San Francisco",unitToken:"DM94103E",lat:37.7778,lng:-122.4119},
+    {name:"Topokki House",address:"SoMa, San Francisco",unitToken:"DM94103F",lat:37.7659,lng:-122.4085},
+    {name:"The Golden Plow",address:"SoMa, San Francisco",unitToken:"DM94103G",lat:37.7649,lng:-122.4169},
+    {name:"Lakeside Diner",address:"SoMa, San Francisco",unitToken:"DM94103H",lat:37.7717,lng:-122.4158}
+  ]
+};
+
+
+
+
+function catByName(n){var l=n.toLowerCase(),c=[];
+if(/coffee|espresso|cafe(?!teria)|latte/.test(l))c.push('Coffee & Cafe');
+if(/tea(?!k)|infusion/.test(l)&&!/steak/.test(l))c.push('Coffee & Cafe');
+if(/pizza|pizzeria|italian|pasta|piacere/.test(l))c.push('Pizza & Italian');
+if(/sandwich|subs?(?:\s|$)|pastrami|deli|hoagie/.test(l))c.push('Sandwiches & Subs');
+if(/bakery|brunch|breakfast|donut|pancake|waffle|egg/.test(l))c.push('Breakfast & Brunch');
+if(/juice|vegan|acai|smoothie|farm|fresh|salad|healthy|organic|bowl/.test(l))c.push('Healthy & Fresh');
+if(/bake|donut|scoop|sweet|cookie|cake|ice cream|dessert|pastry|candy/.test(l))c.push('Sweets & Bakery');
+if(/chicken|soul|comfort|bbq|barbecue|mac|cheese|fried|steak|burger|cow/.test(l))c.push('Comfort Food');
+if(/cairo|middle east|rotisserie|thai|chinese|indian|mexican|taco|sushi|japanese|korean|mediterranean|greek|vietnamese|pho|saz[oó]n|yakuza/.test(l))c.push('International');
+if(/quick|fast|grab|smash|nation|lunch(?:box)?|wrap|drive/.test(l))c.push('Quick Bites');
+if(/bar|grill|pub|sports|tavern|brew|wing|monkey/.test(l)&&!/juice bar/.test(l))c.push('Bar & Grill');
+if(/french|bakery|lunch/.test(l)&&c.indexOf('Breakfast & Brunch')<0)c.push('Breakfast & Brunch');
+if(!c.length)c.push('Quick Bites');return c;}
+
+function cuiByName(n){var l=n.toLowerCase();
+if(/coffee/.test(l))return'Coffee Shop';if(/tea|infusion/.test(l)&&!/steak/.test(l))return'Tea House';
+if(/pizza|pizzeria/.test(l))return'Pizza';if(/pastrami|deli/.test(l))return'Deli & Subs';
+if(/sandwich|subs/.test(l))return'Subs & Sandwiches';if(/french/.test(l))return'French Bakery';
+if(/brunch/.test(l))return'Brunch';if(/donut/.test(l))return'Bakery & Donuts';
+if(/juice/.test(l))return'Juice Bar';if(/vegan/.test(l))return'Vegan';
+if(/acai|smoothie/.test(l))return'Acai & Smoothies';if(/farm/.test(l))return'Farm Fresh';
+if(/bake/.test(l))return'Bakery';if(/scoop|ice cream/.test(l))return'Ice Cream & Desserts';
+if(/chicken/.test(l))return'Fried Chicken';if(/soul|saz/.test(l))return'Latin Soul Food';
+if(/cairo|middle east/.test(l))return'Middle Eastern';if(/rotisserie/.test(l))return'Latin Rotisserie';
+if(/taco|mexican/.test(l))return'Mexican';if(/sushi|japanese|yakuza/.test(l))return'Japanese';
+if(/thai/.test(l))return'Thai';if(/chinese/.test(l))return'Chinese';
+if(/cow/.test(l))return'Comfort Food & Brunch';
+if(/monkey/.test(l))return'Coffee Bar';
+if(/sports bar/.test(l))return'Sports Bar';if(/bar|grill|pub/.test(l))return'Bar & Grill';
+return'Restaurant';}
+
+var $=function(s){return document.querySelector(s)};
+var $$=function(s){return document.querySelectorAll(s)};
+var state={zip:'',radius:5,moods:new Set(),diets:new Set(),filter:'all',screen:'welcome',restaurants:[],isLive:false,centerLatLng:null};
+var screens={welcome:$('#welcome'),prefs:$('#prefs'),results:$('#results')};
+var leafletMap=null;var mapMarkers=[];var userMarker=null;var radiusCircle=null;
+var leafletReady=false;
+(function loadLeaflet(){
+var s=document.createElement('script');
+s.src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+s.onload=function(){leafletReady=true;};
+s.onerror=function(){console.warn('Leaflet failed to load');leafletReady=false;};
+document.head.appendChild(s);
+})();
+
+function nav(to,dir){
+var cur=screens[state.screen],nxt=screens[to];
+if(cur){cur.classList.remove('active');if(dir==='fwd'){cur.classList.add('left');}else{cur.classList.remove('left');}}
+nxt.classList.remove('left');if(dir==='fwd')nxt.style.transform='translateX(40px)';else nxt.style.transform='translateX(-40px)';
+void nxt.offsetWidth;
+nxt.classList.add('active');nxt.style.transform='';nxt.scrollTop=0;state.screen=to;
+if(to==='results'&&leafletMap){setTimeout(function(){leafletMap.invalidateSize();},500);}}
+
+function mkPills(){
+var mp=$('#moodP'),dp=$('#dietP');mp.innerHTML='';dp.innerHTML='';
+MOODS.forEach(function(m){var p=document.createElement('div');p.className='pill'+(state.moods.has(m)?' sel':'');p.textContent=m;p.onclick=function(){if(state.moods.has(m))state.moods.delete(m);else state.moods.add(m);mkPills();};mp.appendChild(p);});
+DIETS.forEach(function(d){var p=document.createElement('div');p.className='pill'+(state.diets.has(d)?' sel':'');p.textContent=d;p.onclick=function(){if(d==='No Restrictions'){state.diets.clear();state.diets.add('No Restrictions');}else{state.diets.delete('No Restrictions');if(state.diets.has(d))state.diets.delete(d);else state.diets.add(d);}mkPills();};dp.appendChild(p);});}
+
+function getFiltered(){
+var f=state.restaurants;
+if(state.moods.size>0)f=f.filter(function(r){return r.categories.some(function(c){return state.moods.has(c);});});
+if(state.diets.size>0&&!state.diets.has('No Restrictions'))f=f.filter(function(r){return Array.from(state.diets).every(function(d){return r.dietaryOptions&&r.dietaryOptions.indexOf(d.toLowerCase())>=0;});});
+if(state.filter!=='all')f=f.filter(function(r){return r.categories.indexOf(state.filter)>=0;});
+return f;}
+
+function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+
+function geocodeZip(zip,cb){
+fetch('https://nominatim.openstreetmap.org/search?format=json&q='+encodeURIComponent(zip+' USA')+'&limit=1')
+.then(function(r){return r.json();})
+.then(function(data){
+if(data&&data.length>0){cb({lat:parseFloat(data[0].lat),lng:parseFloat(data[0].lon)});}
+else{cb(null);}
+}).catch(function(){cb(null);});}
+
+function spreadAroundCenter(center,count,radiusMiles){
+var results=[];
+var radiusDeg=radiusMiles*0.012;
+var goldenAngle=137.508*(Math.PI/180);
+for(var i=0;i<count;i++){
+var t=count>1?(i/(count-1)):0.5;
+var dist=(0.15+t*0.85)*radiusDeg;
+var angle=i*goldenAngle;
+results.push({lat:center.lat+dist*Math.sin(angle),lng:center.lng+dist*Math.cos(angle)});
+}return results;}
+
+function initMap(){
+if(!leafletReady||typeof L==='undefined'){return;}
+if(leafletMap){leafletMap.remove();leafletMap=null;}
+var defaultCenter=[28.5383,-81.3792];
+leafletMap=L.map('leafletMap',{zoomControl:true,attributionControl:false}).setView(defaultCenter,13);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:19,subdomains:'abcd'}).addTo(leafletMap);}
+
+function updateMap(list){
+if(!leafletMap){$('#mapW').style.display='none';return;}
+mapMarkers.forEach(function(m){leafletMap.removeLayer(m);});
+mapMarkers=[];
+if(userMarker){leafletMap.removeLayer(userMarker);userMarker=null;}
+if(radiusCircle){leafletMap.removeLayer(radiusCircle);radiusCircle=null;}
+var mw=$('#mapW');mw.classList.remove('vis');
+if(!state.centerLatLng){mw.classList.add('vis');return;}
+var center=state.centerLatLng;
+leafletMap.setView([center.lat,center.lng],state.radius<=5?13:state.radius<=10?12:11);
+var userIcon=L.divIcon({className:'',html:'<div class="user-marker"></div>',iconSize:[16,16],iconAnchor:[8,8]});
+userMarker=L.marker([center.lat,center.lng],{icon:userIcon,zIndexOffset:1000}).addTo(leafletMap);
+var radiusMeters=state.radius*1609.34;
+radiusCircle=L.circle([center.lat,center.lng],{radius:radiusMeters,color:'#00D632',weight:1.5,opacity:0.4,fillColor:'#00D632',fillOpacity:0.04,dashArray:'8,6'}).addTo(leafletMap);
+var positions=[];
+var hasCoords=list.some(function(r){return r.lat&&r.lng;});
+if(!hasCoords&&list.length>0){positions=spreadAroundCenter(center,list.length,state.radius);}
+list.forEach(function(r,i){
+var lat=r.lat||((positions[i]&&positions[i].lat)||center.lat);
+var lng=r.lng||((positions[i]&&positions[i].lng)||center.lng);
+r._mapLat=lat;r._mapLng=lng;
+var restIcon=L.divIcon({className:'',html:'<div class="restaurant-marker"></div>',iconSize:[12,12],iconAnchor:[6,6]});
+var marker=L.marker([lat,lng],{icon:restIcon}).addTo(leafletMap);
+marker.bindPopup('<div class="popup-name">'+esc(r.name)+'</div><div class="popup-cuisine">'+esc(r.cuisine)+'</div>');
+marker.on('click',function(){
+var cards=$$('.crd');cards.forEach(function(c){
+if(c.getAttribute('data-name')===r.name){
+c.scrollIntoView({behavior:'smooth',block:'center'});
+c.classList.add('highlighted');
+setTimeout(function(){c.classList.remove('highlighted');},2000);
+}});});
+marker._restaurantName=r.name;
+mapMarkers.push(marker);});
+setTimeout(function(){mw.classList.add('vis');leafletMap.invalidateSize();},150);}
+
+function renderResults(){
+var meta=$('#resM'),fb=$('#fbar'),grid=$('#cgrid'),cnt=$('#resC'),title=$('#resT');
+title.textContent='Restaurants near '+state.zip;
+meta.innerHTML='';
+state.moods.forEach(function(m){var t=document.createElement('span');t.className='mtag';t.textContent=m;meta.appendChild(t);});
+if(state.diets.size>0)state.diets.forEach(function(d){var t=document.createElement('span');t.className='mtag';t.style.background='rgba(126,200,160,.12)';t.style.color='#7ec8a0';t.textContent=d;meta.appendChild(t);});
+var badge=document.createElement('span');badge.className='lbadge';badge.innerHTML='<span class="ldot '+(state.isLive?'on':'off')+'"></span> '+(state.isLive?'Live':'Demo');meta.appendChild(badge);
+fb.innerHTML='';
+var ac=document.createElement('div');ac.className='fc'+(state.filter==='all'?' act':'');ac.textContent='All';ac.onclick=function(){state.filter='all';renderResults();};fb.appendChild(ac);
+state.moods.forEach(function(m){var ch=document.createElement('div');ch.className='fc'+(state.filter===m?' act':'');ch.textContent=m;ch.onclick=function(){state.filter=m;renderResults();};fb.appendChild(ch);});
+var filtered=getFiltered();grid.innerHTML='';
+if(!filtered.length){
+grid.innerHTML='<div class="empty"><div class="empty-icon">🍽️</div><div class="emptyt">No restaurants found</div><p>'+(!state.restaurants.length?'No restaurants found nearby. Try a different zip code or expand your search radius.':'Try adjusting your preferences or filters.')+'</p></div>';
+cnt.textContent='';updateMap([]);return;}
+cnt.textContent='Showing '+filtered.length+' restaurant'+(filtered.length!==1?'s':'')+' within '+state.radius+' miles';
+filtered.forEach(function(r){
+var c=document.createElement('div');c.className='crd';
+c.setAttribute('data-name',r.name);
+var col=COLORS[r.categories[0]]||'#00D632';
+c.innerHTML='<div class="cacc" style="background:'+col+';box-shadow:0 0 6px '+col+'44"></div><div class="cname">'+esc(r.name)+'</div><div class="ccui">'+esc(r.cuisine)+'</div><div class="caddr">'+esc(r.address)+'</div><button class="bm">View Menu</button>';
+c.querySelector('.bm').onclick=function(e){e.stopPropagation();openMenu(r);};
+c.onclick=function(){
+mapMarkers.forEach(function(m){
+if(m._restaurantName===r.name){
+leafletMap.flyTo(m.getLatLng(),15,{duration:0.8,easeLinearity:0.25});
+setTimeout(function(){m.openPopup();},400);
+}});};
+grid.appendChild(c);});
+updateMap(filtered);}
+
+function showCopiedToast(msg){
+var toast=$('#copiedToast');toast.textContent=msg||'Copied!';toast.classList.add('show');
+setTimeout(function(){toast.classList.remove('show');},1500);}
+
+function copyText(text){
+if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(function(){showCopiedToast();}).catch(function(){fallbackCopy(text);});}
+else{fallbackCopy(text);}}
+
+function fallbackCopy(text){
+var ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();
+try{document.execCommand('copy');showCopiedToast();}catch(e){}document.body.removeChild(ta);}
+
+var MENU_POOLS={
+'Coffee Shop':{sections:{'Hot Drinks':[{n:'Espresso',d:'Double shot, rich crema',p:3.50},{n:'Cappuccino',d:'Espresso with steamed milk foam',p:4.75},{n:'Vanilla Latte',d:'Espresso, vanilla, steamed milk',p:5.25},{n:'Americano',d:'Espresso with hot water',p:3.75}],'Cold Drinks':[{n:'Iced Mocha',d:'Espresso, chocolate, cold milk, ice',p:5.50},{n:'Cold Brew',d:'Slow-steeped 18hr cold brew',p:4.50},{n:'Matcha Latte',d:'Ceremonial grade matcha, oat milk',p:5.75}],'Pastries':[{n:'Butter Croissant',d:'Flaky, golden, house-made',p:3.25},{n:'Blueberry Muffin',d:'Fresh blueberries, streusel top',p:3.50},{n:'Banana Bread',d:'Warm slice with walnuts',p:3.75}]}},
+'French Bakery':{sections:{'Viennoiserie':[{n:'Pain au Chocolat',d:'Dark chocolate, buttery layers',p:4.25},{n:'Almond Croissant',d:'Frangipane filled, toasted almonds',p:4.75},{n:'Kouign-Amann',d:'Caramelized Breton pastry',p:4.50}],'Sandwiches':[{n:'Jambon-Beurre',d:'Ham, butter, fresh baguette',p:8.50},{n:'Croque Monsieur',d:'Grilled ham & gruyère, béchamel',p:10.25},{n:'Quiche Lorraine',d:'Bacon, gruyère, house salad',p:9.75}],'Desserts':[{n:'Éclair au Chocolat',d:'Choux, chocolate pastry cream',p:5.50},{n:'Tarte aux Fruits',d:'Seasonal fruit, vanilla custard',p:6.25}]}},
+'Japanese':{sections:{'Starters':[{n:'Edamame',d:'Sea salt, chili flakes',p:5.00},{n:'Gyoza',d:'Pan-fried pork dumplings (6pc)',p:7.50},{n:'Miso Soup',d:'Tofu, wakame, scallion',p:3.50}],'Sushi Rolls':[{n:'Spicy Tuna Roll',d:'Tuna, spicy mayo, cucumber',p:12.00},{n:'Dragon Roll',d:'Shrimp tempura, avocado, eel sauce',p:14.50},{n:'Rainbow Roll',d:'California roll topped with assorted sashimi',p:15.00}],'Entrées':[{n:'Chicken Teriyaki',d:'Grilled chicken, teriyaki glaze, rice',p:13.50},{n:'Tonkotsu Ramen',d:'Pork broth, chashu, soft egg, noodles',p:14.00}]}},
+'Mexican':{sections:{'Tacos':[{n:'Carne Asada Taco',d:'Grilled steak, onion, cilantro, salsa verde',p:4.25},{n:'Al Pastor Taco',d:'Marinated pork, pineapple, onion',p:4.00},{n:'Fish Taco',d:'Beer-battered cod, slaw, chipotle crema',p:4.50}],'Plates':[{n:'Burrito Bowl',d:'Rice, beans, protein, pico, guac',p:11.50},{n:'Enchiladas Rojas',d:'Three chicken enchiladas, red sauce, crema',p:12.75},{n:'Quesadilla Grande',d:'Flour tortilla, cheese, choice of protein',p:10.00}],'Sides & Drinks':[{n:'Chips & Guacamole',d:'Fresh-made guac, warm tortilla chips',p:6.50},{n:'Horchata',d:'Cinnamon rice milk, house-made',p:3.50}]}},
+'Latin Soul Food':{sections:{'Plates':[{n:'Pernil Plate',d:'Slow-roasted pork, rice, beans, plantains',p:13.50},{n:'Ropa Vieja',d:'Shredded beef, peppers, rice',p:14.00},{n:'Mofongo',d:'Fried plantain mash, garlic, chicharrón',p:12.00}],'Sides':[{n:'Tostones',d:'Fried green plantains, garlic mojo',p:5.00},{n:'Arroz con Gandules',d:'Rice with pigeon peas',p:4.50},{n:'Maduros',d:'Sweet fried plantains',p:4.50}]}},
+'Deli & Subs':{sections:{'Signature Sandwiches':[{n:'The Classic Pastrami',d:'Hand-cut pastrami, mustard, rye',p:13.50},{n:'Turkey Club',d:'Roasted turkey, bacon, avocado, sourdough',p:12.00},{n:'Italian Sub',d:'Salami, capicola, provolone, oil & vinegar',p:11.50}],'Sides':[{n:'Potato Salad',d:'Creamy, house-made',p:4.00},{n:'Pickle Spear',d:'Garlic dill, crunchy',p:1.50},{n:'Coleslaw',d:'Tangy, fresh-shredded',p:3.50}],'Drinks':[{n:'Fresh Lemonade',d:'Squeezed daily',p:3.50},{n:'Dr. Brown\'s Cream Soda',d:'Classic deli soda',p:2.50}]}},
+'Ice Cream & Desserts':{sections:{'Scoops':[{n:'Single Scoop',d:'Choose any flavor',p:4.50},{n:'Double Scoop',d:'Mix & match flavors',p:6.50},{n:'Waffle Cone Upgrade',d:'House-pressed waffle cone',p:1.50}],'Specialties':[{n:'Sundae',d:'Two scoops, hot fudge, whipped cream, cherry',p:8.50},{n:'Milkshake',d:'Hand-spun, choice of flavor',p:7.00},{n:'Affogato',d:'Vanilla gelato, hot espresso',p:6.00}],'Flavors Today':[{n:'Madagascar Vanilla',d:'Rich, creamy, classic',p:0},{n:'Dark Chocolate',d:'72% cacao, Belgian',p:0},{n:'Strawberry Basil',d:'Seasonal, house-made',p:0}]}},
+'Comfort Food & Brunch':{sections:{'Brunch':[{n:'Avocado Toast',d:'Sourdough, poached egg, chili flakes',p:11.00},{n:'Pancake Stack',d:'Buttermilk, maple syrup, butter',p:10.50},{n:'Breakfast Burrito',d:'Scrambled eggs, chorizo, cheese, salsa',p:12.00}],'Comfort Classics':[{n:'Mac & Cheese',d:'Four-cheese blend, breadcrumb crust',p:10.00},{n:'Fried Chicken Sandwich',d:'Buttermilk fried, pickles, slaw',p:13.50},{n:'Smash Burger',d:'Double patty, American cheese, special sauce',p:12.50}],'Drinks':[{n:'Fresh OJ',d:'Squeezed to order',p:4.50},{n:'Mimosa',d:'Prosecco, fresh orange juice',p:7.00}]}},
+'Coffee Bar':{sections:{'Coffee':[{n:'Pour Over',d:'Single origin, brewed to order',p:4.50},{n:'Flat White',d:'Double ristretto, velvety milk',p:5.00},{n:'Nitro Cold Brew',d:'Smooth, creamy, on tap',p:5.50}],'Food':[{n:'Açaí Bowl',d:'Açaí, granola, banana, honey',p:9.50},{n:'Avocado Toast',d:'Multigrain, radish, everything seasoning',p:8.50},{n:'Breakfast Sandwich',d:'Egg, cheese, bacon, brioche',p:7.50}]}}
+};
+var MENU_DEFAULT={sections:{'Popular Items':[{n:'House Salad',d:'Mixed greens, vinaigrette',p:8.50},{n:'Grilled Chicken Plate',d:'Herb-marinated, seasonal vegetables, rice',p:14.00},{n:'Margherita Flatbread',d:'Fresh mozzarella, basil, tomato sauce',p:11.00},{n:'Soup of the Day',d:'Ask your server — always house-made',p:6.50}],'Mains':[{n:'Pan-Seared Salmon',d:'Lemon butter, asparagus, fingerling potatoes',p:18.50},{n:'Pasta Primavera',d:'Seasonal vegetables, garlic, olive oil, penne',p:13.00},{n:'8oz Burger',d:'Angus beef, cheddar, lettuce, tomato, brioche bun',p:13.50}],'Drinks':[{n:'Iced Tea',d:'House-brewed, unsweetened',p:3.00},{n:'Sparkling Water',d:'San Pellegrino',p:3.50},{n:'Craft Lemonade',d:'Lavender or classic',p:4.50}]}};
+
+function getMenuForRestaurant(r){
+var m=MENU_POOLS[r.cuisine];
+if(m)return m;
+return MENU_DEFAULT;
+}
+
+function openMenu(r){
+$('#mNam').textContent=r.name;
+$('#mCui').textContent=r.cuisine+' — '+r.address;
+var body=$('#mBod');
+var menu=getMenuForRestaurant(r);
+var cart={items:[],total:0};
+function renderMenu(){
+var html='<div class="modal-addr"><div class="modal-addr-label">📍 Address</div>'+esc(r.address)+'</div>';
+var sectionNames=Object.keys(menu.sections);
+for(var s=0;s<sectionNames.length;s++){
+var secName=sectionNames[s];
+var items=menu.sections[secName];
+html+='<div class="menu-section"><div class="menu-section-title">'+esc(secName)+'</div>';
+for(var i=0;i<items.length;i++){
+var item=items[i];
+var inCart=cart.items.filter(function(c){return c.n===item.n;}).length>0;
+html+='<div class="menu-item">'+
+'<div class="menu-item-info"><div class="menu-item-name">'+esc(item.n)+'</div><div class="menu-item-desc">'+esc(item.d)+'</div></div>'+
+'<div class="menu-item-right">'+(item.p>0?'<div class="menu-item-price">$'+item.p.toFixed(2)+'</div>':'')+
+'<button class="menu-add'+(inCart?' added':'')+'" data-sec="'+s+'" data-idx="'+i+'">'+(inCart?'✓':'+')+'</button>'+
+'</div></div>';
+}
+html+='</div>';
+}
+if(cart.items.length>0){
+html+='<div class="cart-bar"><div class="cart-bar-left"><span>'+cart.items.length+'</span> item'+(cart.items.length>1?'s':'')+' · $'+cart.total.toFixed(2)+'</div><button class="cart-checkout" id="cartCheckout">Checkout</button></div>';
+}
+body.innerHTML=html;
+var addBtns=body.querySelectorAll('.menu-add');
+addBtns.forEach(function(btn){
+btn.onclick=function(e){
+e.stopPropagation();
+var si=parseInt(btn.getAttribute('data-sec'));
+var ii=parseInt(btn.getAttribute('data-idx'));
+var secN=sectionNames[si];
+var itm=menu.sections[secN][ii];
+if(itm.p===0)return;
+var existing=cart.items.findIndex(function(c){return c.n===itm.n;});
+if(existing>=0){cart.total-=cart.items[existing].p;cart.items.splice(existing,1);}
+else{cart.items.push({n:itm.n,p:itm.p});cart.total+=itm.p;}
+renderMenu();
+};
+});
+var checkBtn=body.querySelector('#cartCheckout');
+if(checkBtn){checkBtn.onclick=function(){
+closeModal();
+var overlay=document.createElement('div');
+overlay.className='order-overlay';
+overlay.innerHTML='<div class="order-confirmed">'+
+'<div class="order-confirmed-icon">✅</div>'+
+'<div class="order-confirmed-title">Order Confirmed!</div>'+
+'<div class="order-confirmed-sub">Your order from '+esc(r.name)+' is being prepared</div>'+
+'<div class="order-confirmed-eta">🕐 Estimated: 15-25 min</div>'+
+'<br><button class="order-confirmed-done" id="orderDone">Done</button>'+
+'</div>';
+document.body.appendChild(overlay);
+requestAnimationFrame(function(){overlay.classList.add('vis');});
+overlay.querySelector('#orderDone').onclick=function(){
+overlay.classList.remove('vis');
+setTimeout(function(){overlay.remove();},400);
+};
+overlay.onclick=function(e){
+if(e.target===overlay){overlay.classList.remove('vis');setTimeout(function(){overlay.remove();},400);}
+};
+};}
+}
+renderMenu();
+$('#modalBg').classList.add('vis');document.body.style.overflow='hidden';
+mapMarkers.forEach(function(m){if(m._restaurantName===r.name){m.openPopup();}});}
+
+function closeModal(){$('#modalBg').classList.remove('vis');document.body.style.overflow='';}
+
+function showLoad(cb){var l=$('#loader');l.classList.add('vis');setTimeout(function(){l.classList.remove('vis');if(cb)cb();},1200);}
+
+function surprise(){
+state.moods.clear();state.diets.clear();state.diets.add('No Restrictions');
+var sh=MOODS.slice().sort(function(){return Math.random()-0.5;});
+var n=Math.floor(Math.random()*3)+1;
+for(var i=0;i<n;i++)state.moods.add(sh[i]);
+mkPills();doSearch();}
+
+function valZip(){
+var z=$('#zipIn').value.trim(),e=$('#zipErr');
+if(!z){e.textContent='Please enter a zip code';return false;}
+if(!/^\d{5}$/.test(z)){e.textContent='Zip code must be exactly 5 digits';return false;}
+e.textContent='';state.zip=z;return true;}
+
+function processApiResults(restaurants){
+return restaurants.map(function(r){
+return{name:r.name,address:r.address,cuisine:cuiByName(r.name),categories:catByName(r.name),unitToken:r.unitToken,imageUrl:r.imageUrl||null,dietaryOptions:[],lat:r.lat||null,lng:r.lng||null};});}
+
+function getDemoRestaurants(){
+var zip=state.zip||'';
+var list=DEMO_RESTAURANTS_BY_ZIP[zip];
+if(!list){
+// Find nearest zip by numeric distance
+var zn=parseInt(zip,10);
+var bestZip=null,bestDist=Infinity;
+var allZips=Object.keys(DEMO_RESTAURANTS_BY_ZIP);
+for(var i=0;i<allZips.length;i++){
+var d=Math.abs(parseInt(allZips[i],10)-zn);
+if(d<bestDist){bestDist=d;bestZip=allZips[i];}
+}
+list=bestZip?DEMO_RESTAURANTS_BY_ZIP[bestZip]:[];
+}
+return list.map(function(r){
+return{name:r.name,address:r.address,cuisine:cuiByName(r.name),categories:catByName(r.name),unitToken:r.unitToken,imageUrl:null,dietaryOptions:[],lat:r.lat,lng:r.lng};});}
+
+function doSearch(){
+var l=$('#loader');l.classList.add('vis');
+initMap();
+
+function finishSearch(){
+state.filter='all';
+renderResults();
+l.classList.remove('vis');
+nav('results','fwd');
+}
+
+function loadRestaurants(){
+if(window.__goose&&window.__goose.callTool){
+try{window.__goose.callTool('neighborhood','get-restaurants-nearby',{location:state.zip,maxDistance:state.radius+' miles'}).then(function(res){
+var list=(res&&res.restaurants)||[];
+if(list.length>0){state.restaurants=processApiResults(list);state.isLive=true;}else{state.restaurants=getDemoRestaurants();state.isLive=false;}
+finishSearch();}).catch(function(){state.restaurants=getDemoRestaurants();state.isLive=false;finishSearch();});}
+catch(e){state.restaurants=getDemoRestaurants();state.isLive=false;finishSearch();}}
+else{state.restaurants=getDemoRestaurants();state.isLive=false;finishSearch();}}
+
+geocodeZip(state.zip,function(coords){
+state.centerLatLng=coords||{lat:28.5383,lng:-81.3792};
+loadRestaurants();
+});
+// Safety timeout: if geocode hangs, proceed anyway after 3s
+setTimeout(function(){
+if(state.screen!=='results'){
+state.centerLatLng=state.centerLatLng||{lat:28.5383,lng:-81.3792};
+loadRestaurants();
+}
+},3000);
+}
+
+function init(){
+mkPills();
+$$('#radRow .rpill').forEach(function(p){p.onclick=function(){$$('#radRow .rpill').forEach(function(x){x.classList.remove('sel');});p.classList.add('sel');state.radius=parseInt(p.getAttribute('data-r'),10);};});
+$('#btnFind').onclick=function(){if(valZip())nav('prefs','fwd');};
+$('#zipIn').onkeydown=function(e){if(e.key==='Enter'&&valZip())nav('prefs','fwd');};
+$('#zipIn').oninput=function(e){e.target.value=e.target.value.replace(/\D/g,'').slice(0,5);$('#zipErr').textContent='';};
+$('#backW').onclick=function(){nav('welcome','back');};
+$('#btnShow').onclick=function(){doSearch();};
+$('#btnSurp').onclick=surprise;
+$('#backP').onclick=function(){nav('prefs','back');};
+$('#mX').onclick=closeModal;
+$('#modalBg').onclick=function(e){if(e.target===$('#modalBg'))closeModal();};
+document.onkeydown=function(e){if(e.key==='Escape'){closeModal();closePanel('accountOverlay');closePanel('prefsOverlay');}};
+function openPanel(id){$('#'+id).classList.add('vis');document.body.style.overflow='hidden';}
+function closePanel(id){$('#'+id).classList.remove('vis');document.body.style.overflow='';}
+$('#navAccount').onclick=function(){openPanel('accountOverlay');};
+$('#navPrefs').onclick=function(){openPanel('prefsOverlay');};
+$('#accountClose').onclick=function(){closePanel('accountOverlay');};
+$('#prefsClose').onclick=function(){closePanel('prefsOverlay');};
+$('#accountOverlay').onclick=function(e){if(e.target===$('#accountOverlay'))closePanel('accountOverlay');};
+$('#prefsOverlay').onclick=function(e){if(e.target===$('#prefsOverlay'))closePanel('prefsOverlay');};
+$$('.toggle').forEach(function(t){t.onclick=function(){t.classList.toggle('on');};});}
+init();
+})();
+</script>
+</body>
+</html>
