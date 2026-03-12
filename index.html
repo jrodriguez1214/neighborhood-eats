@@ -221,6 +221,45 @@ body{font-family:'Cash Sans',-apple-system,BlinkMacSystemFont,'Helvetica Neue',h
 .recent-order-name{font-size:.85rem;font-weight:500;letter-spacing:-.01em}
 .recent-order-meta{font-size:.72rem;color:var(--m)}
 .recent-order-price{font-size:.85rem;font-weight:600;color:var(--g)}
+.insights-panel{display:none;position:fixed;top:0;left:0;width:100%;height:100%;z-index:200;background:var(--bg);overflow-y:auto;animation:slideUp .35s ease}
+.insights-panel.open{display:block}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.insights-header{display:flex;align-items:center;justify-content:space-between;padding:20px;border-bottom:1px solid rgba(255,255,255,0.06)}
+.insights-title{font-size:1.1rem;font-weight:600;letter-spacing:-.02em}
+.insights-close{background:none;border:none;color:var(--t);font-size:1.3rem;cursor:pointer;padding:4px 8px}
+.insights-body{padding:20px}
+.insights-hero{text-align:center;margin-bottom:28px}
+.insights-total{font-size:2.8rem;font-weight:700;color:var(--g);letter-spacing:-.03em;line-height:1}
+.insights-total-label{font-size:.82rem;color:var(--m);margin-top:4px}
+.insights-period{display:flex;gap:6px;justify-content:center;margin-bottom:24px}
+.insights-period-btn{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:var(--m);padding:6px 16px;border-radius:.6em;font-size:.78rem;font-weight:500;cursor:pointer;transition:all .2s;font-family:inherit}
+.insights-period-btn.active{background:var(--gg);border-color:var(--g);color:var(--g)}
+.insights-section-title{font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--m);margin:20px 0 12px;font-weight:500}
+.insights-chart{display:flex;align-items:flex-end;gap:6px;height:120px;padding:0 4px;margin-bottom:8px}
+.insights-bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
+.insights-bar{width:100%;border-radius:4px 4px 0 0;background:var(--g);min-height:4px;transition:height .4s ease;position:relative}
+.insights-bar.dim{background:rgba(0,224,19,0.25)}
+.insights-bar-label{font-size:.62rem;color:var(--m);white-space:nowrap}
+.insights-bar-val{font-size:.58rem;color:var(--g);font-weight:600;position:absolute;top:-14px;left:50%;transform:translateX(-50%);white-space:nowrap}
+.insights-cat-row{display:flex;align-items:center;gap:12px;padding:12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:.75em;margin-bottom:8px}
+.insights-cat-icon{width:32px;height:32px;border-radius:.5em;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.insights-cat-icon svg{width:16px;height:16px;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.insights-cat-info{flex:1}
+.insights-cat-name{font-size:.82rem;font-weight:500}
+.insights-cat-meta{font-size:.7rem;color:var(--m)}
+.insights-cat-amount{font-size:.85rem;font-weight:600}
+.insights-cat-bar{height:3px;border-radius:2px;background:rgba(255,255,255,0.06);margin-top:6px;overflow:hidden}
+.insights-cat-bar-fill{height:100%;border-radius:2px;transition:width .5s ease}
+.insights-trend{display:flex;align-items:center;gap:8px;padding:14px;background:rgba(0,224,19,0.06);border:1px solid rgba(0,224,19,0.12);border-radius:.75em;margin-bottom:20px}
+.insights-trend svg{width:20px;height:20px;fill:none;stroke:var(--g);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.insights-trend-text{font-size:.82rem;color:var(--t);line-height:1.4}
+.insights-trend-text strong{color:var(--g);font-weight:600}
+.insights-fav{display:flex;align-items:center;gap:12px;padding:12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:.75em;margin-bottom:8px}
+.insights-fav-rank{width:24px;height:24px;border-radius:50%;background:var(--gg);display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;color:var(--g);flex-shrink:0}
+.insights-fav-info{flex:1}
+.insights-fav-name{font-size:.82rem;font-weight:500}
+.insights-fav-meta{font-size:.7rem;color:var(--m)}
+.insights-fav-total{font-size:.82rem;font-weight:600;color:var(--g)}
 @media(max-width:768px){.atitle{font-size:2.2rem}.stitle{font-size:1.3rem}.cgrid{grid-template-columns:1fr}.pbtns{flex-direction:column;align-items:stretch}.pbtns .btn{width:100%;text-align:center}.mdl{max-height:100vh;border-radius:0;max-width:100%}#prefs,#results{padding:20px 16px 100px}}
 @media(max-width:480px){.atitle{font-size:1.6rem}.pill{padding:8px 14px;font-size:.82rem}}
 </style>
@@ -252,17 +291,60 @@ body{font-family:'Cash Sans',-apple-system,BlinkMacSystemFont,'Helvetica Neue',h
 <div class="panel-header"><span class="panel-title">Account</span><button class="panel-close" id="accountClose">✕</button></div>
 <div class="panel-body">
 <div class="profile-section"><div class="profile-avatar">JR</div><div class="profile-info"><div class="profile-name">Joshua R.</div><div class="profile-tag">$joshr</div></div></div>
-<div class="panel-stat-row"><div class="panel-stat"><div class="panel-stat-val">47</div><div class="panel-stat-label">Orders</div></div><div class="panel-stat"><div class="panel-stat-val">12</div><div class="panel-stat-label">Favorites</div></div><div class="panel-stat"><div class="panel-stat-val">$284</div><div class="panel-stat-label">This Month</div></div></div>
+<div class="panel-stat-row"><div class="panel-stat"><div class="panel-stat-val">47</div><div class="panel-stat-label">Orders</div></div><div class="panel-stat"><div class="panel-stat-val">12</div><div class="panel-stat-label">Favorites</div></div><div class="panel-stat"><div class="panel-stat-val">$284</div><div class="panel-stat-label">This Month</div></div><div class="panel-stat"><div class="panel-stat-val">4.9</div><div class="panel-stat-label">Avg Rating</div></div></div>
 <div class="panel-section-title">Recent Orders</div>
 <div class="recent-order"><div class="recent-order-icon"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6 2 10c0 2 2 4 10 12 8-8 10-10 10-12 0-4-4.48-8-10-8z"/><circle cx="9" cy="9" r="1.2" fill="var(--g)" stroke="none"/><circle cx="14" cy="8" r="1.2" fill="var(--g)" stroke="none"/><circle cx="11" cy="12" r="1.2" fill="var(--g)" stroke="none"/></svg></div><div class="recent-order-info"><div class="recent-order-name">Bella Napoli</div><div class="recent-order-meta">2 items · Yesterday</div></div><div class="recent-order-price">$24.50</div></div>
 <div class="recent-order"><div class="recent-order-icon"><svg viewBox="0 0 24 24"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg></div><div class="recent-order-info"><div class="recent-order-name">Ritual Coffee</div><div class="recent-order-meta">1 item · 3 days ago</div></div><div class="recent-order-price">$5.75</div></div>
 <div class="recent-order"><div class="recent-order-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M8 12l2-4 2 4-2 4z"/><path d="M14 10l2-2 2 4-2 2z"/></svg></div><div class="recent-order-info"><div class="recent-order-name">Sakura Sushi</div><div class="recent-order-meta">3 items · Last week</div></div><div class="recent-order-price">$38.00</div></div>
+<div class="recent-order"><div class="recent-order-icon"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div><div class="recent-order-info"><div class="recent-order-name">Taqueria Sol</div><div class="recent-order-meta">4 items · 2 weeks ago</div></div><div class="recent-order-price">$31.25</div></div>
+<div class="recent-order"><div class="recent-order-icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg></div><div class="recent-order-info"><div class="recent-order-name">Stack'd Burgers</div><div class="recent-order-meta">2 items · 3 weeks ago</div></div><div class="recent-order-price">$22.50</div></div>
 <div class="panel-section-title">Account</div>
 <div class="panel-menu-item"><div class="panel-menu-icon"><svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div><div class="panel-menu-text"><div class="panel-menu-label">Payment Methods</div><div class="panel-menu-sub">Cash App Pay · Visa ****4821</div></div><div class="panel-menu-arrow">›</div></div>
 <div class="panel-menu-item"><div class="panel-menu-icon"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div><div class="panel-menu-text"><div class="panel-menu-label">Saved Addresses</div><div class="panel-menu-sub">Home · Work · 1 more</div></div><div class="panel-menu-arrow">›</div></div>
 <div class="panel-menu-item"><div class="panel-menu-icon"><svg viewBox="0 0 24 24"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg></div><div class="panel-menu-text"><div class="panel-menu-label">Rewards & Boosts</div><div class="panel-menu-sub">3 active boosts</div></div><div class="panel-menu-arrow">›</div></div>
-<div class="panel-menu-item"><div class="panel-menu-icon"><svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div><div class="panel-menu-text"><div class="panel-menu-label">Spending Insights</div><div class="panel-menu-sub">View your food spending</div></div><div class="panel-menu-arrow">›</div></div>
+<div class="panel-menu-item" id="openInsights" style="cursor:pointer"><div class="panel-menu-icon"><svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div><div class="panel-menu-text"><div class="panel-menu-label">Spending Insights</div><div class="panel-menu-sub">View your food spending</div></div><div class="panel-menu-arrow">›</div></div>
 </div></div></div>
+
+<div class="insights-panel" id="insightsPanel">
+<div class="insights-header"><span class="insights-title">Spending Insights</span><button class="insights-close" id="insightsClose">✕</button></div>
+<div class="insights-body">
+<div class="insights-hero"><div class="insights-total">$1,247</div><div class="insights-total-label">Total spent on food · 2024</div></div>
+<div class="insights-period"><button class="insights-period-btn" data-p="week">This Week</button><button class="insights-period-btn active" data-p="month">This Month</button><button class="insights-period-btn" data-p="year">This Year</button></div>
+<div class="insights-trend"><svg viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg><div class="insights-trend-text">You're spending <strong>12% less</strong> than last month. Your average order is <strong>$18.40</strong> across <strong>15 orders</strong>.</div></div>
+<div class="insights-section-title">Monthly Spending</div>
+<div class="insights-chart">
+<div class="insights-bar-col"><div class="insights-bar dim" style="height:45%"><span class="insights-bar-val">$82</span></div><div class="insights-bar-label">Jul</div></div>
+<div class="insights-bar-col"><div class="insights-bar dim" style="height:62%"><span class="insights-bar-val">$114</span></div><div class="insights-bar-label">Aug</div></div>
+<div class="insights-bar-col"><div class="insights-bar dim" style="height:55%"><span class="insights-bar-val">$101</span></div><div class="insights-bar-label">Sep</div></div>
+<div class="insights-bar-col"><div class="insights-bar dim" style="height:78%"><span class="insights-bar-val">$143</span></div><div class="insights-bar-label">Oct</div></div>
+<div class="insights-bar-col"><div class="insights-bar dim" style="height:90%"><span class="insights-bar-val">$165</span></div><div class="insights-bar-label">Nov</div></div>
+<div class="insights-bar-col"><div class="insights-bar dim" style="height:70%"><span class="insights-bar-val">$128</span></div><div class="insights-bar-label">Dec</div></div>
+<div class="insights-bar-col"><div class="insights-bar dim" style="height:85%"><span class="insights-bar-val">$156</span></div><div class="insights-bar-label">Jan</div></div>
+<div class="insights-bar-col"><div class="insights-bar dim" style="height:68%"><span class="insights-bar-val">$124</span></div><div class="insights-bar-label">Feb</div></div>
+<div class="insights-bar-col"><div class="insights-bar dim" style="height:72%"><span class="insights-bar-val">$132</span></div><div class="insights-bar-label">Mar</div></div>
+<div class="insights-bar-col"><div class="insights-bar dim" style="height:58%"><span class="insights-bar-val">$106</span></div><div class="insights-bar-label">Apr</div></div>
+<div class="insights-bar-col"><div class="insights-bar dim" style="height:95%"><span class="insights-bar-val">$174</span></div><div class="insights-bar-label">May</div></div>
+<div class="insights-bar-col"><div class="insights-bar" style="height:100%"><span class="insights-bar-val">$284</span></div><div class="insights-bar-label">Jun</div></div>
+</div>
+<div class="insights-section-title">Spending by Category</div>
+<div class="insights-cat-row"><div class="insights-cat-icon" style="background:rgba(255,99,71,0.12)"><svg viewBox="0 0 24 24" stroke="#FF6347"><circle cx="12" cy="12" r="10"/></svg></div><div class="insights-cat-info"><div class="insights-cat-name">Pizza & Italian</div><div class="insights-cat-meta">12 orders · Most ordered</div><div class="insights-cat-bar"><div class="insights-cat-bar-fill" style="width:85%;background:#FF6347"></div></div></div><div class="insights-cat-amount">$342</div></div>
+<div class="insights-cat-row"><div class="insights-cat-icon" style="background:rgba(0,224,19,0.1)"><svg viewBox="0 0 24 24" stroke="var(--g)"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/></svg></div><div class="insights-cat-info"><div class="insights-cat-name">Coffee & Cafe</div><div class="insights-cat-meta">28 orders · Most frequent</div><div class="insights-cat-bar"><div class="insights-cat-bar-fill" style="width:65%;background:var(--g)"></div></div></div><div class="insights-cat-amount">$196</div></div>
+<div class="insights-cat-row"><div class="insights-cat-icon" style="background:rgba(255,165,0,0.12)"><svg viewBox="0 0 24 24" stroke="#FFA500"><circle cx="12" cy="12" r="10"/></svg></div><div class="insights-cat-info"><div class="insights-cat-name">Asian & Sushi</div><div class="insights-cat-meta">8 orders</div><div class="insights-cat-bar"><div class="insights-cat-bar-fill" style="width:52%;background:#FFA500"></div></div></div><div class="insights-cat-amount">$248</div></div>
+<div class="insights-cat-row"><div class="insights-cat-icon" style="background:rgba(147,112,219,0.12)"><svg viewBox="0 0 24 24" stroke="#9370DB"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/></svg></div><div class="insights-cat-info"><div class="insights-cat-name">Mexican & Latin</div><div class="insights-cat-meta">6 orders</div><div class="insights-cat-bar"><div class="insights-cat-bar-fill" style="width:40%;background:#9370DB"></div></div></div><div class="insights-cat-amount">$178</div></div>
+<div class="insights-cat-row"><div class="insights-cat-icon" style="background:rgba(30,144,255,0.12)"><svg viewBox="0 0 24 24" stroke="#1E90FF"><rect x="3" y="3" width="18" height="18" rx="2"/></svg></div><div class="insights-cat-info"><div class="insights-cat-name">American & Burgers</div><div class="insights-cat-meta">5 orders</div><div class="insights-cat-bar"><div class="insights-cat-bar-fill" style="width:35%;background:#1E90FF"></div></div></div><div class="insights-cat-amount">$156</div></div>
+<div class="insights-section-title">Top Restaurants</div>
+<div class="insights-fav"><div class="insights-fav-rank">1</div><div class="insights-fav-info"><div class="insights-fav-name">Bella Napoli</div><div class="insights-fav-meta">12 orders · Last ordered yesterday</div></div><div class="insights-fav-total">$286</div></div>
+<div class="insights-fav"><div class="insights-fav-rank">2</div><div class="insights-fav-info"><div class="insights-fav-name">Ritual Coffee</div><div class="insights-fav-meta">28 orders · Last ordered 3 days ago</div></div><div class="insights-fav-total">$168</div></div>
+<div class="insights-fav"><div class="insights-fav-rank">3</div><div class="insights-fav-info"><div class="insights-fav-name">Sakura Sushi</div><div class="insights-fav-meta">8 orders · Last ordered last week</div></div><div class="insights-fav-total">$304</div></div>
+<div class="insights-fav"><div class="insights-fav-rank">4</div><div class="insights-fav-info"><div class="insights-fav-name">Taqueria Sol</div><div class="insights-fav-meta">6 orders · Last ordered 2 weeks ago</div></div><div class="insights-fav-total">$142</div></div>
+<div class="insights-fav"><div class="insights-fav-rank">5</div><div class="insights-fav-info"><div class="insights-fav-name">Stack'd Burgers</div><div class="insights-fav-meta">5 orders · Last ordered 3 weeks ago</div></div><div class="insights-fav-total">$118</div></div>
+<div class="insights-section-title">Ordering Habits</div>
+<div class="insights-trend" style="flex-direction:column;align-items:flex-start;gap:12px">
+<div style="display:flex;align-items:center;gap:8px"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span class="insights-trend-text">Peak ordering time: <strong>7-9 PM</strong></span></div>
+<div style="display:flex;align-items:center;gap:8px"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span class="insights-trend-text">Busiest day: <strong>Friday</strong></span></div>
+<div style="display:flex;align-items:center;gap:8px"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg><span class="insights-trend-text">Most reordered: <strong>Margherita Pizza</strong> (8x)</span></div>
+</div>
+</div></div>
 
 <div class="panel-overlay" id="prefsOverlay"><div class="panel panel-right">
 <div class="panel-header"><span class="panel-title">Settings</span><button class="panel-close" id="prefsClose">✕</button></div>
@@ -1752,6 +1834,9 @@ $('#navAccount').onclick=function(){openPanel('accountOverlay');};
 $('#navPrefs').onclick=function(){openPanel('prefsOverlay');};
 $('#accountClose').onclick=function(){closePanel('accountOverlay');};
 $('#prefsClose').onclick=function(){closePanel('prefsOverlay');};
+$('#openInsights').onclick=function(){closePanel('accountOverlay');setTimeout(function(){$('#insightsPanel').classList.add('open');},200);};
+$('#insightsClose').onclick=function(){$('#insightsPanel').classList.remove('open');};
+document.querySelectorAll('.insights-period-btn').forEach(function(b){b.onclick=function(){document.querySelectorAll('.insights-period-btn').forEach(function(x){x.classList.remove('active');});b.classList.add('active');}});
 $('#accountOverlay').onclick=function(e){if(e.target===$('#accountOverlay'))closePanel('accountOverlay');};
 $('#prefsOverlay').onclick=function(e){if(e.target===$('#prefsOverlay'))closePanel('prefsOverlay');};
 $$('.toggle').forEach(function(t){t.onclick=function(){t.classList.toggle('on');};});}
