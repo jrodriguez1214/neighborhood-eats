@@ -26,7 +26,7 @@ body{font-family:'Cash Sans',-apple-system,BlinkMacSystemFont,'Helvetica Neue',h
 .rinner{position:relative;z-index:1;background:radial-gradient(ellipse at 50% 20%,rgba(13,13,13,0.98) 0%,rgba(13,13,13,0.92) 55%,rgba(13,13,13,0.5) 78%,transparent 100%);border-radius:24px}
 .mdl{position:relative;z-index:201}
 .screen{position:absolute;top:0;left:0;width:100%;height:100%;overflow-y:auto;overflow-x:hidden;opacity:0;pointer-events:none;transition:opacity .4s,transform .4s;transform:translateX(40px);z-index:1}
-.screen.active{opacity:1;pointer-events:auto;transform:translateX(0)!important}
+.screen.active{opacity:1;pointer-events:auto;transform:translateX(0)}
 .screen.left{transform:translateX(-40px)}
 #welcome{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;background:radial-gradient(ellipse at 50% 35%,rgba(0,224,19,0.07) 0%,rgba(0,224,19,0.02) 30%,transparent 65%),#000}
 #welcome.active{animation:fadeUp .7s ease forwards}
@@ -1532,11 +1532,35 @@ document.head.appendChild(s);
 
 function nav(to,dir){
 var cur=screens[state.screen],nxt=screens[to];
-if(cur){cur.classList.remove('active');if(dir==='fwd'){cur.classList.add('left');}else{cur.classList.remove('left');}}
-nxt.classList.remove('left');if(dir==='fwd')nxt.style.transform='translateX(40px)';else nxt.style.transform='translateX(-40px)';
+if(!nxt||to===state.screen)return;
+/* deactivate current */
+if(cur){
+cur.classList.remove('active');
+cur.style.transform='';
+if(dir==='fwd'){cur.classList.add('left');}
+else{cur.classList.remove('left');}
+}
+/* reset all screens that aren't current or next */
+Object.keys(screens).forEach(function(k){
+if(k!==to&&k!==state.screen){
+screens[k].classList.remove('active','left');
+screens[k].style.transform='';
+}
+});
+/* prepare next screen entry position */
+nxt.classList.remove('left','active');
+nxt.style.transition='none';
+if(dir==='fwd'){nxt.style.transform='translateX(40px)';}
+else{nxt.style.transform='translateX(-40px)';}
 void nxt.offsetWidth;
-nxt.classList.add('active');nxt.style.transform='';nxt.scrollTop=0;state.screen=to;
-if(to==='results'&&leafletMap){setTimeout(function(){leafletMap.invalidateSize();},500);}}
+/* animate in */
+nxt.style.transition='';
+nxt.classList.add('active');
+nxt.style.transform='';
+nxt.scrollTop=0;
+state.screen=to;
+if(to==='results'&&leafletMap){setTimeout(function(){leafletMap.invalidateSize();},500);}
+}
 
 function mkPills(){
 var mp=$('#moodP'),dp=$('#dietP');mp.innerHTML='';dp.innerHTML='';
